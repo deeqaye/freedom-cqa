@@ -13,7 +13,8 @@ export async function mount(el) {
     <div class="page-head">
       <div><h1>Диалоги</h1><div class="sub" data-count></div></div>
       <div class="row">
-        <input data-gid placeholder="group_id (напр. DEV)" style="width:170px">
+        <label class="f" style="flex-direction:row;align-items:center;gap:6px">group_id
+          <input data-gid placeholder="напр. DEV" style="width:140px" aria-label="group_id набора"></label>
         <button class="btn ghost" data-ingest>Загрузить из API</button>
         <label class="btn ghost" style="margin:0">Файл JSON<input type="file" accept=".json" data-file hidden></label>
       </div>
@@ -115,8 +116,14 @@ export async function mount(el) {
     evaluate(state.group ? { group_id: state.group } : { conversation_ids: vis.map(r => r.id) }, e.target);
   };
   el.querySelector("[data-ingest]").onclick = async e => {
-    const gid = el.querySelector("[data-gid]").value.trim();
-    if (!gid) return toast("Укажите group_id", true);
+    const input = el.querySelector("[data-gid]");
+    const gid = input.value.trim();
+    if (!gid) {
+      input.focus();
+      input.style.outline = "2px solid var(--hl-border)";
+      setTimeout(() => { input.style.outline = ""; }, 2500);
+      return toast("Введите group_id в поле слева от кнопки (например, DEV)", true);
+    }
     e.target.disabled = true;
     try {
       const r = await api.post(`/api/ingest?group_id=${encodeURIComponent(gid)}`);
