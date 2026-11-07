@@ -1,10 +1,26 @@
 import { api, getRole } from "../api.js";
 import { CHANNEL, esc, fmtNum, modal, costLine, runBatch, scoreTone, toast } from "../ui.js";
 
+// Sortable columns: key -> [header, value getter]. null values always go last.
+const STATUS_RANK = { ok: 0, error: 1, running: 2, queued: 3 };
+const okScore = r => (r.evaluation && r.evaluation.status === "ok" ? r.evaluation.final_score : null);
+const COLS = [
+  ["id", "ID", r => r.id],
+  ["channel", "Канал", r => CHANNEL[r.channel] || r.channel],
+  ["language", "Язык", r => r.language],
+  ["operator", "Оператор", r => r.operator_name || null],
+  ["turns", "Реплик", r => r.turns, "num"],
+  ["score", "Итог", okScore, "num"],
+  ["critical", "Грубая ошибка", r => (r.evaluation && r.evaluation.status === "ok" ? (r.evaluation.critical_flag ? 1 : 0) : null)],
+  ["status", "Статус", r => (r.evaluation ? STATUS_RANK[r.evaluation.status] ?? 9 : 10)],
+];
+const byId = (a, b) => a.id.localeCompare(b.id, "ru", { numeric: true });
+const cmpVal = (a, b) => (typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b), "ru", { numeric: true }));
+
 const STATUS = { ok: ["good", "Оценён"], error: ["bad", "Ошибка"], queued: ["info", "В очереди"], running: ["info", "Оценивается"] };
 
 export async function mount(el) {
-  const state = { group: "", language: "", channel: "", q: "" };
+  const state = { group: "", language: "", channel: "", q: "", sortKey: "", sortDir: "" };  // one sorted column at a time
   try { Object.assign(state, JSON.parse(sessionStorage.getItem("cqa.filters") || "{}")); } catch { /* ignore */ }
   let rows = [];
   const checklists = await api.get("/api/checklists");
@@ -31,8 +47,8 @@ export async function mount(el) {
       <div data-progress></div>
       <div style="overflow:auto">
         <table class="tbl">
-          <thead><tr><th><input type="checkbox" data-all aria-label="Выбрать все"></th><th>ID</th><th>Канал</th><th>Язык</th><th>Оператор</th>
-            <th class="num">Реплик</th><th class="num">Итог</th><th>Грубая ошибка</th><th>Статус</th></tr></thead>
+          <thead><tr><th><input type="checkbox" data-all aria-label="Выбрать все"></th>${COLS.map(([k, label, , cls]) =>
+            `<th class="sortable ${cls || ""}" data-sort="${k}" aria-sort="none"><button type="button">${label}<span class="sort-ind" aria-hidden="true"></span></button></th>`).join("")}</tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -49,14 +65,41 @@ export async function mount(el) {
     draw();
   }
 
+  /** Click cycles ASC -> DESC -> none. Ties (and the unsorted view) are ordered by ID ascending,
+   *  except when ID itself is the sorted column. */
+  function sorted(list) {
+    const col = COLS.find(c => c[0] === state.sortKey);
+    if (!col || !state.sortDir) return list;
+    const get = col[2], dir = state.sortDir === "desc" ? -1 : 1;
+    return list.slice().sort((a, b) => {
+      const va = get(a), vb = get(b);
+      if (va == null || vb == null) {
+        if (va == null && vb == null) return byId(a, b);
+        return va == null ? 1 : -1;  // empty values last in both directions
+      }
+      const c = cmpVal(va, vb) * dir;
+      return c || (col[0] === "id" ? 0 : byId(a, b));
+    });
+  }
+
+  function drawSortHeads() {
+    el.querySelectorAll("th[data-sort]").forEach(th => {
+      const on = th.dataset.sort === state.sortKey && state.sortDir;
+      th.setAttribute("aria-sort", on ? (state.sortDir === "asc" ? "ascending" : "descending") : "none");
+      th.classList.toggle("sorted", !!on);
+      th.querySelector(".sort-ind").textContent = on ? (state.sortDir === "asc" ? " ▲" : " ▼") : " ↕";
+    });
+  }
+
   function visible() {
     const q = state.q.toLowerCase();
-    return rows.filter(r => (!state.group || r.group_id === state.group) && (!state.language || r.language === state.language)
+    return sorted(rows.filter(r => (!state.group || r.group_id === state.group) && (!state.language || r.language === state.language)
       && (!state.channel || r.channel === state.channel)
-      && (!q || r.id.toLowerCase().includes(q) || (r.operator_name || "").toLowerCase().includes(q)));
+      && (!q || r.id.toLowerCase().includes(q) || (r.operator_name || "").toLowerCase().includes(q))));
   }
 
   function draw() {
+    drawSortHeads();
     const vis = visible();
     const evaluated = vis.filter(r => r.evaluation && r.evaluation.status === "ok");
     const avg = evaluated.length ? evaluated.reduce((s, r) => s + (r.evaluation.final_score || 0), 0) / evaluated.length : null;
@@ -92,6 +135,18 @@ export async function mount(el) {
   el.addEventListener("change", e => {
     if (e.target.dataset.sel) { e.target.checked ? selected.add(e.target.dataset.sel) : selected.delete(e.target.dataset.sel); draw(); }
     if (e.target.matches("[data-all]")) { visible().forEach(r => e.target.checked ? selected.add(r.id) : selected.delete(r.id)); draw(); }
+  });
+  el.querySelector("thead").addEventListener("click", e => {
+    const th = e.target.closest("th[data-sort]");
+    if (!th) return;
+    const k = th.dataset.sort;
+    // one column at a time: a new column starts at ASC; the same column cycles ASC -> DESC -> none
+    if (state.sortKey !== k) { state.sortKey = k; state.sortDir = "asc"; }
+    else if (state.sortDir === "asc") state.sortDir = "desc";
+    else if (state.sortDir === "desc") { state.sortKey = ""; state.sortDir = ""; }
+    else state.sortDir = "asc";
+    try { sessionStorage.setItem("cqa.filters", JSON.stringify(state)); } catch { /* ignore */ }
+    draw();
   });
   tbody.addEventListener("click", e => {
     const tr = e.target.closest("tr[data-id]");

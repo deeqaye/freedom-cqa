@@ -204,3 +204,13 @@ table.tbl { width: 100%; border-collapse: collapse; }
 .gloss dd { margin: 2px 0 0; color: var(--text-2); }
 .role-help { display: block; margin: 6px 0 2px; color: inherit; opacity: .8; }
 @media (max-width: 720px) { .tiles.roles { grid-template-columns: 1fr; } }
+
+/* sortable table headers */
+.tbl th.sortable { padding: 0; }
+.tbl th.sortable button { all: unset; box-sizing: border-box; display: block; width: 100%; padding: 8px 10px; cursor: pointer; text-align: inherit; }
+.tbl th.sortable button:hover { color: var(--text); }
+.tbl th.sortable button:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; border-radius: 4px; }
+.tbl th.sorted { color: var(--brand-strong); }
+.tbl th.num.sortable button { text-align: right; }
+.sort-ind { opacity: .55; font-size: 10px; }
+.tbl th.sorted .sort-ind { opacity: 1; }
