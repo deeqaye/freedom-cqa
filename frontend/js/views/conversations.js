@@ -101,9 +101,16 @@ export async function mount(el) {
   function draw() {
     drawSortHeads();
     const vis = visible();
-    const evaluated = vis.filter(r => r.evaluation && r.evaluation.status === "ok");
-    const avg = evaluated.length ? evaluated.reduce((s, r) => s + (r.evaluation.final_score || 0), 0) / evaluated.length : null;
-    el.querySelector("[data-count]").textContent = `${vis.length} диалогов · оценено ${evaluated.length}` + (avg != null ? ` · средний балл ${fmtNum(avg)}` : "");
+    // "N диалогов · оценено M · средний балл X" for a set of rows (average over scored ones)
+    const summary = list => {
+      const ok = list.filter(r => r.evaluation && r.evaluation.status === "ok");
+      const sc = ok.map(r => r.evaluation.final_score).filter(x => x != null);
+      const avg = sc.length ? sc.reduce((a, b) => a + b, 0) / sc.length : null;
+      return `${list.length} диалогов · оценено ${ok.length}` + (avg != null ? ` · средний балл ${fmtNum(avg)}` : "");
+    };
+    const sel = rows.filter(r => selected.has(r.id));
+    el.querySelector("[data-count]").innerHTML = `<span>${summary(vis)}</span>`
+      + (sel.length ? `<span class="sel-summary">Выбрано: ${summary(sel)}</span>` : "");
     tbody.innerHTML = vis.map(r => {
       const e = r.evaluation;
       const st = e ? STATUS[e.status] : ["na", "Не оценён"];

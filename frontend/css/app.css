@@ -214,3 +214,7 @@ table.tbl { width: 100%; border-collapse: collapse; }
 .tbl th.num.sortable button { text-align: right; }
 .sort-ind { opacity: .55; font-size: 10px; }
 .tbl th.sorted .sort-ind { opacity: 1; }
+
+/* selected-rows summary next to the overall counts on Диалоги */
+.sel-summary { margin-left: 28px; padding-left: 12px; border-left: 2px solid var(--brand); color: var(--brand-strong); }
+@media (max-width: 720px) { .sel-summary { display: block; margin: 4px 0 0; } }
