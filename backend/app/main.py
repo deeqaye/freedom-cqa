@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from . import seed
 from .config import FRONTEND_DIR, SEED_ON_START
 from .db import Base, SessionLocal, engine
-from .routers import appeals, audio, checklists, conversations, evaluations, stats
+from .routers import admin, appeals, audio, checklists, conversations, evaluations, stats
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 
@@ -36,6 +36,7 @@ app.include_router(evaluations.router)
 app.include_router(appeals.router)
 app.include_router(stats.router)
 app.include_router(audio.router)
+app.include_router(admin.router)
 
 
 @app.get("/api/health", tags=["meta"])

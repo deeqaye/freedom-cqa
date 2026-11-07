@@ -4,7 +4,10 @@
 import { fmtTime } from "../ui.js";
 import { BIN, align, buildTimeline, loudness, utterDur } from "./align.js";
 
-const LANES = [["client", "Клиент"], ["operator", "Оператор / бот"]];
+// Each lane shows sound only where its own speaker talks. "other" = IVR bot + sound no transcript line
+// covers (e.g. hold music), so no audio is hidden and every bar is in exactly one lane.
+const LANES = [["client", "Клиент"], ["operator", "Оператор"], ["other", "Бот / прочее"]];
+const laneOf = who => (who === "client" || who === "operator" ? who : "other");
 const COLORS = {
   client: ["#0e3b2a", "#5d8a6e"],     // [played, unplayed]
   operator: ["#1f7a3a", "#7cc08a"],
@@ -22,7 +25,7 @@ export function createPlayer(root, { src, transcript }) {
 
   root.innerHTML = `
     <div class="lanes">
-      ${LANES.map(([k, l]) => `<div class="lane-label">${l}</div><canvas data-lane="${k}" aria-label="Дорожка: ${l}"></canvas>`).join("")}
+      ${LANES.map(([k, l]) => `<div class="lane-label${k === "other" ? " small muted" : ""}">${l}</div><canvas data-lane="${k}" aria-label="Дорожка: ${l}"${k === "other" ? ' style="height:30px"' : ""}></canvas>`).join("")}
     </div>
     <div class="controls">
       <button class="play" data-play aria-label="Воспроизвести">▶</button>
@@ -70,16 +73,14 @@ export function createPlayer(root, { src, transcript }) {
         if (!env) { g.fillStyle = "#dfe5e1"; g.fillRect(i * step, h / 2 - 1, 2, 2); continue; }
         // loudest bin inside this bar's time range -> bar height (true loudness)
         const a = Math.floor((i / n) * dur / BIN), b = Math.max(a + 1, Math.floor(((i + 1) / n) * dur / BIN));
-        let amp = 0, who = "none", whoAmp = -1;
+        // loudest voiced bin of THIS lane's speaker within the bar
+        let amp = 0, who = null;
         for (let k = a; k < Math.min(b, env.length); k++) {
-          if (env[k] > amp) amp = env[k];
-          if (voiced[k] && env[k] > whoAmp) { whoAmp = env[k]; who = owner[k]; }
+          if (voiced[k] && laneOf(owner[k]) === lane && env[k] > amp) { amp = env[k]; who = owner[k]; }
         }
-        const mine = who === lane || (lane === "operator" && who === "bot");
-        const bh = Math.max(2, Math.sqrt(amp) * (h - 4));
-        if (mine) g.fillStyle = COLORS[who][played ? 0 : 1];
-        else if (who === "none" && amp > 0.05) g.fillStyle = COLORS.none[played ? 0 : 1];
-        else { g.fillStyle = "#e6ebe7"; } // the other speaker's (or silence) — faint, same true height
+        if (!who) { g.fillStyle = "#e3e8e4"; g.fillRect(i * step, h / 2 - 1, 2, 2); continue; } // not this speaker
+        const bh = Math.max(3, Math.sqrt(amp) * (h - 4));
+        g.fillStyle = COLORS[who][played ? 0 : 1];
         g.fillRect(i * step, (h - bh) / 2, 2, bh);
       }
       g.fillStyle = "#145c2a";
@@ -103,7 +104,7 @@ export function createPlayer(root, { src, transcript }) {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         analyse(await ctx.decodeAudioData(buf.slice(0)));
         ctx.close();
-        $("[data-status]").textContent = "Высота — громкость записи; цвет — говорящий по расшифровке (приблизительно).";
+        $("[data-status]").textContent = "Высота — громкость записи. Дорожка говорящего определяется по расшифровке (приблизительно, ±несколько секунд).";
       } catch { /* waveform optional; playback still works */ }
       draw();
     } catch (e) {

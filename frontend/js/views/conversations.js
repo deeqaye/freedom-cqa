@@ -1,4 +1,4 @@
-import { api } from "../api.js";
+import { api, getRole } from "../api.js";
 import { CHANNEL, esc, fmtNum, modal, runBatch, scoreTone, toast } from "../ui.js";
 
 const STATUS = { ok: ["good", "Оценён"], error: ["bad", "Ошибка"], queued: ["info", "В очереди"], running: ["info", "Оценивается"] };
@@ -12,7 +12,10 @@ export async function mount(el) {
   el.innerHTML = `
     <div class="page-head">
       <div><h1>Диалоги</h1><div class="sub" data-count></div></div>
-      <div class="row"><button class="btn" data-load>⤓ Загрузить набор</button></div>
+      <div class="row">
+        ${getRole() === "admin" ? `<button class="btn ghost" data-admin>Данные…</button>` : ""}
+        <button class="btn" data-load>⤓ Загрузить набор</button>
+      </div>
     </div>
     <div class="card stack">
       <div class="row">
@@ -73,7 +76,7 @@ export async function mount(el) {
         <td>${e && e.critical_flag ? '<span class="chip bad">⚠ Да</span>' : e && e.status === "ok" ? '<span class="muted">Нет</span>' : ""}</td>
         <td><span class="chip ${st[0]}">${st[1]}</span></td>
       </tr>`;
-    }).join("") || `<tr><td colspan="9" class="empty">Нет диалогов. Загрузите набор по group_id.</td></tr>`;
+    }).join("") || `<tr><td colspan="9" class="empty">Нет диалогов. Нажмите «Загрузить набор».</td></tr>`;
     el.querySelector("[data-eval-sel]").disabled = !selected.size;
     el.querySelector("[data-eval-sel]").textContent = selected.size ? `Оценить выбранные (${selected.size})` : "Оценить выбранные";
   }
@@ -110,6 +113,13 @@ export async function mount(el) {
     if (!vis.length) return toast("Нет диалогов для оценки", true);
     evaluate(state.group ? { group_id: state.group } : { conversation_ids: vis.map(r => r.id) }, e.target);
   };
+  el.querySelector("[data-admin]")?.addEventListener("click", () => openDataAdmin(async () => {
+    state.group = "";
+    try { sessionStorage.setItem("cqa.filters", JSON.stringify(state)); } catch { /* ignore */ }
+    selected.clear();
+    dispatchEvent(new Event("cqa:appeals"));
+    await load();
+  }));
   el.querySelector("[data-load]").onclick = () => openLoader(async r => {
     toast(`Набор ${r.group_id}: ${r.count} диалогов (новых ${r.new}, обновлено ${r.updated})`);
     state.group = r.group_id;
@@ -187,5 +197,47 @@ function openLoader(onLoaded) {
         go.textContent = "Загрузить";
       }
     };
+  });
+}
+
+/** Admin: clear all conversations/evaluations/appeals (optionally checklists) or re-load the demo set. */
+async function openDataAdmin(onChanged) {
+  const c = await api.get("/api/admin/counts");
+  modal(`
+    <h2>Управление данными</h2>
+    <p>Сейчас в базе: <b>${c.conversations}</b> диалогов, <b>${c.evaluations}</b> оценок, <b>${c.appeals}</b> апелляций,
+      <b>${c.checklist_versions}</b> версий чек-листов.</p>
+    <div class="card stack" style="gap:8px;border-color:#efc4bb">
+      <h3 style="margin:0;color:var(--bad)">Очистить данные</h3>
+      <p class="small" style="margin:0">Удаляет все диалоги, оценки и апелляции — чтобы загрузить набор и оценить его с нуля.
+        Данные не вернутся сами после перезапуска сервера.</p>
+      <label class="row small"><input type="checkbox" data-cl> Также сбросить чек-листы к исходной версии v1</label>
+      <label class="row small"><input type="checkbox" data-ok> Я понимаю, что это действие нельзя отменить</label>
+      <div class="row"><span class="spacer"></span><button class="btn danger" data-reset disabled>Очистить</button></div>
+    </div>
+    <div class="card stack" style="gap:8px">
+      <h3 style="margin:0">Демо-набор</h3>
+      <p class="small" style="margin:0">Загрузить DEV (65 диалогов) и сохранённые в репозитории оценки для неоценённых диалогов.</p>
+      <div class="row"><span class="spacer"></span><button class="btn ghost" data-demo>Загрузить демо-набор</button></div>
+    </div>
+    <div class="small" data-err style="color:var(--bad)"></div>
+    <div class="row"><span class="spacer"></span><button class="btn ghost" data-close>Закрыть</button></div>`,
+  (m, close) => {
+    const $ = s => m.querySelector(s);
+    $("[data-ok]").onchange = e => { $("[data-reset]").disabled = !e.target.checked; };
+    const run = async (btn, fn, msg) => {
+      btn.disabled = true;
+      try {
+        const r = await fn();
+        close();
+        toast(msg(r));
+        await onChanged();
+      } catch (e) { $("[data-err]").textContent = e.message; btn.disabled = false; }
+    };
+    $("[data-reset]").onclick = e => run(e.target,
+      () => api.post("/api/admin/reset", { confirm: "DELETE", reset_checklists: $("[data-cl]").checked }),
+      r => `Удалено: ${r.deleted.conversations} диалогов, ${r.deleted.evaluations} оценок, ${r.deleted.appeals} апелляций`);
+    $("[data-demo]").onclick = e => run(e.target, () => api.post("/api/admin/seed-demo"),
+      r => `Загружено: ${r.loaded.conversations} диалогов, ${r.loaded.evaluations} оценок`);
   });
 }

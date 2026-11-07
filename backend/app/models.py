@@ -91,3 +91,10 @@ class Appeal(Base):
     improvement: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class Meta(Base):
+    """Small key/value store for app state (e.g. whether first-start seeding already happened)."""
+    __tablename__ = "meta"
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str | None] = mapped_column(Text, nullable=True)
