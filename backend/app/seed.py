@@ -6,7 +6,7 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from .config import DATA_DIR, RESULTS_DIR, SEED_DIR, SEED_RESULTS
+from .config import DATA_DIR, RESULTS_DIR, SEED_DIR, SEED_RESULTS, SNAPSHOT_DIR
 from .models import Checklist, ChecklistVersion, Conversation, Evaluation, now
 from .services.ingest import load_file, upsert_payload
 from .services.scoring import ValidationError, compute_score, validate_results
@@ -28,7 +28,8 @@ def seed_checklist(db: Session) -> None:
 def seed_datasets(db: Session) -> None:
     if db.query(Conversation).first():
         return
-    for f in sorted(DATA_DIR.glob("*.json")):
+    files = {f.name: f for d in (DATA_DIR, SNAPSHOT_DIR) for f in sorted(d.glob("*.json"))}
+    for f in files.values():
         try:
             ids = upsert_payload(db, load_file(f))
             log.info("seeded %d conversations from %s", len(ids), f.name)

@@ -32,7 +32,8 @@ Without Postgres (`DATABASE_URL` unset), it uses SQLite in `data/cqa.db`.
 | | |
 |---|---|
 | `POST /api/ingest?group_id=X` | fetch a dataset from the organizers' API |
-| `POST /api/conversations/upload` | upload a dataset JSON file |
+| `POST /api/ingest/url` `{"url": "<full GET link>"}` | fetch a dataset from a full organizer link (https, organizer domain only) |
+| `POST /api/conversations/upload` | upload a dataset JSON file (API response, `{records}` or a list) |
 | `GET /api/conversations` · `/api/conversations/{id}` | list and card (transcript with 1-based `turn`) |
 | `GET/PUT /api/checklists/chat-quality` | read the checklist / save a new version (header `X-Role: admin\|lead`) |
 | `POST /api/evaluations` `{"group_id":"DEV"}` or `{"conversation_ids":[...], "wait":true}` | run an evaluation |

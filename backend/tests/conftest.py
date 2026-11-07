@@ -5,3 +5,4 @@ import tempfile
 os.environ["DATABASE_URL"] = f"sqlite:///{tempfile.mkdtemp()}/test.db"
 os.environ["EVALUATOR"] = "stub"
 os.environ["SEED_RESULTS"] = "0"
+os.environ["SNAPSHOT_DIR"] = tempfile.mkdtemp()

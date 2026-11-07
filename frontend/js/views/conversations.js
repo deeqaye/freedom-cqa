@@ -1,5 +1,5 @@
 import { api } from "../api.js";
-import { CHANNEL, esc, fmtNum, runBatch, scoreTone, toast } from "../ui.js";
+import { CHANNEL, esc, fmtNum, modal, runBatch, scoreTone, toast } from "../ui.js";
 
 const STATUS = { ok: ["good", "Оценён"], error: ["bad", "Ошибка"], queued: ["info", "В очереди"], running: ["info", "Оценивается"] };
 
@@ -12,12 +12,7 @@ export async function mount(el) {
   el.innerHTML = `
     <div class="page-head">
       <div><h1>Диалоги</h1><div class="sub" data-count></div></div>
-      <div class="row">
-        <label class="f" style="flex-direction:row;align-items:center;gap:6px">group_id
-          <input data-gid placeholder="напр. DEV" style="width:140px" aria-label="group_id набора"></label>
-        <button class="btn ghost" data-ingest>Загрузить из API</button>
-        <label class="btn ghost" style="margin:0">Файл JSON<input type="file" accept=".json" data-file hidden></label>
-      </div>
+      <div class="row"><button class="btn" data-load>⤓ Загрузить набор</button></div>
     </div>
     <div class="card stack">
       <div class="row">
@@ -115,33 +110,82 @@ export async function mount(el) {
     if (!vis.length) return toast("Нет диалогов для оценки", true);
     evaluate(state.group ? { group_id: state.group } : { conversation_ids: vis.map(r => r.id) }, e.target);
   };
-  el.querySelector("[data-ingest]").onclick = async e => {
-    const input = el.querySelector("[data-gid]");
-    const gid = input.value.trim();
-    if (!gid) {
-      input.focus();
-      input.style.outline = "2px solid var(--hl-border)";
-      setTimeout(() => { input.style.outline = ""; }, 2500);
-      return toast("Введите group_id в поле слева от кнопки (например, DEV)", true);
-    }
-    e.target.disabled = true;
-    try {
-      const r = await api.post(`/api/ingest?group_id=${encodeURIComponent(gid)}`);
-      toast(`Загружено ${r.count} диалогов (${gid})`);
-      state.group = gid;
-      await load();
-    } catch (err) { toast(err.message, true); } finally { e.target.disabled = false; }
-  };
-  el.querySelector("[data-file]").onchange = async e => {
-    const fd = new FormData();
-    fd.append("file", e.target.files[0]);
-    try {
-      const r = await api.post("/api/conversations/upload", fd);
-      toast(`Загружено ${r.count} диалогов`);
-      await load();
-    } catch (err) { toast(err.message, true); }
-    e.target.value = "";
-  };
+  el.querySelector("[data-load]").onclick = () => openLoader(async r => {
+    toast(`Набор ${r.group_id}: ${r.count} диалогов (новых ${r.new}, обновлено ${r.updated})`);
+    state.group = r.group_id;
+    try { sessionStorage.setItem("cqa.filters", JSON.stringify(state)); } catch { /* ignore */ }
+    await load();
+  });
 
   await load();
+}
+
+/** Dataset loader: by group_id (server's ORG_API_URL), by full GET link, or by JSON file. */
+function openLoader(onLoaded) {
+  modal(`
+    <h2>Загрузить набор диалогов</h2>
+    <div class="seg" data-tabs>
+      <button data-t="gid" class="on">По group_id</button><button data-t="url">По ссылке</button><button data-t="file">Файл JSON</button>
+    </div>
+    <div data-pane="gid" class="stack" style="gap:8px">
+      <label class="f">group_id<input data-gid placeholder="например, DEV" autocomplete="off"></label>
+      <p class="small muted">Запрос к API организаторов через сервер (адрес API задан в настройках сервера).</p>
+    </div>
+    <div data-pane="url" class="stack" style="gap:8px" hidden>
+      <label class="f">Полная ссылка GET (вместе с group_id)<textarea rows="3" data-url placeholder="https://…powerplatform.com/…&group_id=…"></textarea></label>
+      <label class="f">group_id (необязательно — иначе берётся из ответа или ссылки)<input data-url-gid autocomplete="off"></label>
+      <p class="small muted">Принимаются только https-ссылки на домен API организаторов.</p>
+    </div>
+    <div data-pane="file" class="stack" style="gap:8px" hidden>
+      <label class="f">Файл JSON — ответ API, {records:[…]} или массив записей<input type="file" accept=".json,application/json" data-file></label>
+      <label class="f">group_id (необязательно)<input data-file-gid autocomplete="off"></label>
+    </div>
+    <div class="small" data-err style="color:var(--bad)"></div>
+    <div class="row"><span class="spacer"></span><button class="btn ghost" data-close>Отмена</button><button class="btn" data-go>Загрузить</button></div>`,
+  (m, close) => {
+    let tab = "gid";
+    const $ = s => m.querySelector(s);
+    const show = t => {
+      tab = t;
+      m.querySelectorAll("[data-t]").forEach(b => b.classList.toggle("on", b.dataset.t === t));
+      m.querySelectorAll("[data-pane]").forEach(p => { p.hidden = p.dataset.pane !== t; });
+      $("[data-err]").textContent = "";
+    };
+    $("[data-tabs]").addEventListener("click", e => { const b = e.target.closest("[data-t]"); if (b) show(b.dataset.t); });
+    $("[data-gid]").focus();
+    m.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.tagName === "INPUT" && e.target.type !== "file") $("[data-go]").click(); });
+
+    $("[data-go]").onclick = async () => {
+      const err = $("[data-err]"), go = $("[data-go]");
+      err.textContent = "";
+      let req;
+      if (tab === "gid") {
+        const gid = $("[data-gid]").value.trim();
+        if (!gid) { err.textContent = "Введите group_id"; return $("[data-gid]").focus(); }
+        req = () => api.post(`/api/ingest?group_id=${encodeURIComponent(gid)}`);
+      } else if (tab === "url") {
+        const url = $("[data-url]").value.trim(), gid = $("[data-url-gid]").value.trim();
+        if (!/^https:\/\//i.test(url)) { err.textContent = "Вставьте полную https-ссылку"; return $("[data-url]").focus(); }
+        req = () => api.post("/api/ingest/url", { url, group_id: gid || null });
+      } else {
+        const f = $("[data-file]").files[0], gid = $("[data-file-gid]").value.trim();
+        if (!f) { err.textContent = "Выберите файл"; return; }
+        const fd = new FormData();
+        fd.append("file", f);
+        req = () => api.post(`/api/conversations/upload${gid ? `?group_id=${encodeURIComponent(gid)}` : ""}`, fd);
+      }
+      go.disabled = true;
+      go.textContent = "Загрузка…";
+      try {
+        const r = await req();
+        close();
+        await onLoaded(r);
+      } catch (e) {
+        err.textContent = e.message;
+      } finally {
+        go.disabled = false;
+        go.textContent = "Загрузить";
+      }
+    };
+  });
 }

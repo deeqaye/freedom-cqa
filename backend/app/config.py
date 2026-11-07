@@ -14,8 +14,13 @@ RESULTS_DIR = ROOT / "results"
 FRONTEND_DIR = ROOT / "frontend"
 
 DATA_DIR.mkdir(exist_ok=True)
+# Where fetched/uploaded datasets are saved as JSON snapshots (re-seeded on a fresh DB).
+SNAPSHOT_DIR = Path(os.getenv("SNAPSHOT_DIR", str(DATA_DIR)))
+SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 ORG_API_URL = os.getenv("ORG_API_URL", "")
+# Hosts a pasted dataset link may point to (suffix match). Organizer API runs on Power Platform.
+INGEST_ALLOWED_HOSTS = os.getenv("INGEST_ALLOWED_HOSTS", "environment.api.powerplatform.com")
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DATA_DIR / 'cqa.db'}")
 # Render/Heroku-style URLs -> SQLAlchemy + psycopg 3 driver
 if DATABASE_URL.startswith("postgres://"):
