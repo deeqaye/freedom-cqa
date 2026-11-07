@@ -1,23 +1,24 @@
-// Call player: two speaker lanes (client / operator+bot) over one mono recording.
-// Lanes are derived from transcript timing: the recording is mono, so a bar is drawn in a lane when
-// that speaker's turn covers the moment. Supports seek, speed, jump-to-start, region highlight.
+// Call player over one mono recording.
+// Bar HEIGHT is the real loudness of the recording (RMS per 0.1 s), so indicators match what you hear.
+// The transcript only COLOURS bars by speaker (mono audio, approximate timestamps); see align.js.
 import { fmtTime } from "../ui.js";
+import { BIN, align, buildTimeline, loudness, utterDur } from "./align.js";
 
-const REC_START = /запись и транскрибирование запущены|жазу және транскрипция басталды|recording .*started/i;
-const LANES = [["client", "Клиент"], ["operator", "Оператор"]];
+const LANES = [["client", "Клиент"], ["operator", "Оператор / бот"]];
+const COLORS = {
+  client: ["#0e3b2a", "#5d8a6e"],     // [played, unplayed]
+  operator: ["#1f7a3a", "#7cc08a"],
+  bot: ["#4f7f8f", "#a7c4cc"],
+  none: ["#8a978e", "#c9d3cc"],       // speech that no transcript line covers
+};
 
 export function createPlayer(root, { src, transcript }) {
-  // Audio time 0 == the "recording started" system event (if present), not the first transcript line.
-  const recStart = (transcript.find(m => m.speaker === "system" && REC_START.test(m.text)) || {}).t || 0;
-  const segs = { client: [], operator: [] };
-  transcript.forEach((m, i) => {
-    const lane = m.speaker === "client" ? "client" : (m.speaker === "operator" || m.speaker === "bot") ? "operator" : null;
-    if (!lane || m.t == null) return;
-    const next = transcript.slice(i + 1).find(x => x.t != null && x.t > m.t);
-    const start = m.t - recStart;
-    // A turn's timestamp marks its end of utterance in STT logs; approximate the span backwards, capped.
-    segs[lane].push([Math.max(0, start - Math.min(8, 1 + m.text.length / 14)), next ? Math.min(start + 0.5, next.t - recStart) : start + 2]);
-  });
+  const toRec = buildTimeline(transcript);
+  let env = null;         // Float32Array loudness per BIN, normalised 0..1
+  let voiced = null;      // Uint8Array per BIN
+  let owner = null;       // per BIN: "client" | "operator" | "bot" | "none"
+  // Predicted [start, end] of a message in the recording; replaced by the calibrated one once audio is decoded.
+  let span = m => { const e = toRec(m.t); return [e - utterDur(m), e]; };
 
   root.innerHTML = `
     <div class="lanes">
@@ -37,12 +38,20 @@ export function createPlayer(root, { src, transcript }) {
 
   const audio = new Audio();
   audio.preload = "auto";
-  let peaks = null, region = null, raf = 0;
+  let region = null, raf = 0;
   const canvases = [...root.querySelectorAll("canvas")];
   const $ = s => root.querySelector(s);
 
+  function analyse(decoded) {
+    ({ env, voiced } = loudness(decoded.getChannelData(0), decoded.sampleRate));
+    const al = align(transcript, voiced);
+    owner = al.owner;
+    span = al.span;
+  }
+
   function draw() {
-    const dur = audio.duration || 1;
+    const dur = audio.duration || (env ? env.length * BIN : 1);
+    const pos = (audio.currentTime || 0) / dur;
     for (const cv of canvases) {
       const dpr = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
       if (!w) continue;
@@ -55,20 +64,28 @@ export function createPlayer(root, { src, transcript }) {
         g.fillRect(x0, 0, x1 - x0, h);
         g.fillStyle = "#f0b866"; g.fillRect(x0, 0, 1.5, h); g.fillRect(x1 - 1.5, 0, 1.5, h);
       }
-      const lane = cv.dataset.lane, step = 4, n = Math.floor(w / step), pos = audio.currentTime / dur;
+      const lane = cv.dataset.lane, step = 3, n = Math.floor(w / step);
       for (let i = 0; i < n; i++) {
-        const t = (i / n) * dur;
-        const active = segs[lane].some(([a, b]) => t >= a && t <= b);
-        const amp = peaks ? peaks[Math.floor((i / n) * peaks.length)] : 0.15;
-        const bh = active ? Math.max(3, amp * (h - 6)) : 2;
         const played = i / n <= pos;
-        g.fillStyle = active ? (lane === "client" ? (played ? "#0e3b2a" : "#3d6b50") : (played ? "#1f7a3a" : "#7cc08a")) : "#c9d3cc";
+        if (!env) { g.fillStyle = "#dfe5e1"; g.fillRect(i * step, h / 2 - 1, 2, 2); continue; }
+        // loudest bin inside this bar's time range -> bar height (true loudness)
+        const a = Math.floor((i / n) * dur / BIN), b = Math.max(a + 1, Math.floor(((i + 1) / n) * dur / BIN));
+        let amp = 0, who = "none", whoAmp = -1;
+        for (let k = a; k < Math.min(b, env.length); k++) {
+          if (env[k] > amp) amp = env[k];
+          if (voiced[k] && env[k] > whoAmp) { whoAmp = env[k]; who = owner[k]; }
+        }
+        const mine = who === lane || (lane === "operator" && who === "bot");
+        const bh = Math.max(2, Math.sqrt(amp) * (h - 4));
+        if (mine) g.fillStyle = COLORS[who][played ? 0 : 1];
+        else if (who === "none" && amp > 0.05) g.fillStyle = COLORS.none[played ? 0 : 1];
+        else { g.fillStyle = "#e6ebe7"; } // the other speaker's (or silence) — faint, same true height
         g.fillRect(i * step, (h - bh) / 2, 2, bh);
       }
       g.fillStyle = "#145c2a";
       g.fillRect(pos * w, 0, 1.5, h);
     }
-    const p = (audio.currentTime / (audio.duration || 1)) * 100;
+    const p = pos * 100;
     $("[data-prog] i").style.width = p + "%";
     $("[data-prog] b").style.left = p + "%";
     $("[data-time]").textContent = `${fmtTime(audio.currentTime)} / ${fmtTime(audio.duration)}`;
@@ -84,25 +101,17 @@ export function createPlayer(root, { src, transcript }) {
       $("[data-status]").textContent = "";
       try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const decoded = await ctx.decodeAudioData(buf.slice(0));
-        const ch = decoded.getChannelData(0), N = 1200, size = Math.floor(ch.length / N);
-        peaks = new Float32Array(N);
-        let max = 0;
-        for (let i = 0; i < N; i++) {
-          let s = 0;
-          for (let j = i * size; j < (i + 1) * size; j += 8) s = Math.max(s, Math.abs(ch[j]));
-          peaks[i] = s; max = Math.max(max, s);
-        }
-        peaks = peaks.map(x => x / (max || 1));
+        analyse(await ctx.decodeAudioData(buf.slice(0)));
         ctx.close();
-      } catch { /* waveform optional */ }
+        $("[data-status]").textContent = "Высота — громкость записи; цвет — говорящий по расшифровке (приблизительно).";
+      } catch { /* waveform optional; playback still works */ }
       draw();
     } catch (e) {
       $("[data-status]").textContent = `Запись недоступна: ${e.message}`;
     }
   }
 
-  let pending = null; // seek requested before metadata loaded
+  let pending = null, wantPlay = false; // seek requested before metadata loaded
   const seekTo = s => {
     s = Math.max(0, s);
     if (audio.readyState < 1) { pending = s; return; }
@@ -118,8 +127,9 @@ export function createPlayer(root, { src, transcript }) {
   $("[data-play]").onclick = () => (audio.paused ? audio.play() : audio.pause());
   $("[data-start]").onclick = () => seekTo(0);
   $("[data-op]").onclick = () => {
-    const op = transcript.find(m => m.speaker === "operator");
-    if (op) seekTo(op.t - recStart - 2);
+    // first operator line that is actually in the recording (some calls start recording late)
+    const op = transcript.find(m => m.speaker === "operator" && m.t != null && span(m)[1] > 0);
+    if (op) seekTo(span(op)[0] - 1.5);
   };
   $("[data-rate]").onchange = e => { audio.playbackRate = +e.target.value; };
   audio.addEventListener("play", () => { $("[data-play]").textContent = "❚❚"; loop(); });
@@ -128,21 +138,24 @@ export function createPlayer(root, { src, transcript }) {
     if (pending != null) { const p = pending; pending = null; seekTo(p); if (wantPlay) audio.play().catch(() => {}); }
     draw();
   });
-  let wantPlay = false;
   const onResize = () => draw();
   addEventListener("resize", onResize);
   load();
 
   return {
-    /** Audio position (s) for a transcript message. */
-    timeOf: m => (m.t == null ? null : Math.max(0, m.t - recStart)),
-    /** Seek to a message (with ~2s lead-in) and highlight [from, to] messages. */
+    /** Predicted start (s) of a message in the recording. */
+    timeOf: m => (m.t == null ? null : Math.max(0, span(m)[0])),
+    /** Seek to a message (1.5 s lead-in) and highlight [from, to]. */
     focus(fromMsg, toMsg, play = true) {
-      const a = this.timeOf(fromMsg), b = this.timeOf(toMsg || fromMsg);
-      if (a == null) return;
-      region = [Math.max(0, a - 6), b + 1];
+      if (fromMsg.t == null) return;
+      const a = span(fromMsg)[0], b = span(toMsg || fromMsg)[1];
+      if (b <= 0) {
+        $("[data-status]").textContent = `Реплика #${fromMsg.turn} прозвучала до начала записи — в аудио её нет.`;
+        return;
+      }
+      region = [Math.max(0, a - 1.5), b + 1];
       wantPlay = play;
-      seekTo(Math.max(0, a - 6));
+      seekTo(Math.max(0, a - 1.5));
       if (play && audio.readyState >= 1) audio.play().catch(() => {});
       draw();
     },
