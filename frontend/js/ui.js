@@ -95,8 +95,37 @@ export async function runBatch(el, body) {
     const done = (p.ok || 0) + (p.error || 0);
     bar.style.width = `${(done / ids.length) * 100}%`;
     lbl.textContent = `${done} / ${ids.length}` + (p.error ? ` · ошибок: ${p.error}` : "");
-    if (done >= ids.length) return p;
+    if (done >= ids.length) {
+      const cost = await api.get(`/api/stats/cost?ids=${ids.join(",")}`).catch(() => null);
+      if (cost) el.insertAdjacentHTML("beforeend", `<div class="small muted" style="margin-top:6px">${costLine(cost)}</div>`);
+      return { ...p, cost };
+    }
   }
+}
+
+/** USD with enough digits for sub-cent amounts. */
+export function fmtUsd(x) {
+  if (x == null) return "—";
+  if (x === 0) return "$0";
+  return "$" + (x < 0.01 ? x.toPrecision(2) : x.toFixed(x < 1 ? 4 : 2));
+}
+
+/** Seconds -> "4.2 с" / "3 мин 12 с". */
+export function fmtDur(s) {
+  if (s == null) return "—";
+  if (s < 60) return `${s.toFixed(s < 10 ? 1 : 0)} с`;
+  return `${Math.floor(s / 60)} мин ${Math.round(s % 60)} с`;
+}
+
+/** One-line summary of /api/stats/cost. */
+export function costLine(c) {
+  const parts = [`${c.evaluations} оценок`];
+  if (c.time.wall_clock_s != null) parts.push(`за ${fmtDur(c.time.wall_clock_s)}`);
+  if (c.time.avg_s != null) parts.push(`≈${fmtDur(c.time.avg_s)} на диалог`);
+  if (c.tokens.avg_per_evaluation != null) parts.push(`≈${c.tokens.avg_per_evaluation.toLocaleString("ru")} токенов`);
+  if (c.cost.total_usd != null) parts.push(`${fmtUsd(c.cost.total_usd)} всего, ${fmtUsd(c.cost.avg_per_evaluation_usd)} на диалог`);
+  else parts.push("стоимость не сообщена оценщиком");
+  return parts.join(" · ");
 }
 
 /** Hover tooltip for chart marks with data-tip. */

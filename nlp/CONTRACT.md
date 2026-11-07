@@ -86,7 +86,7 @@ This is the record exactly as the organizers' API returns it:
 | `checked_turns` | no | `[from, to]`, the range examined. Useful for "No, the action was missing". |
 | `na_reason` | when `value` is null | The N/A condition that is met. |
 | `model` | yes | `mode`: `local` / `external_api` / `hybrid`. `name`: the real model name(s). |
-| `usage` | recommended | Tokens and cost. The guide requires the cost of one evaluation. |
+| `usage` | recommended | Tokens and cost. The guide requires the cost of one evaluation. Sum over **all** LLM calls made for this conversation (retries included). Keys: `input_tokens`, `output_tokens`, optional `cache_read_input_tokens`, `cache_creation_input_tokens`, `cost_usd`. If `cost_usd` is left out, the service computes it from `model.name` and its price table. Time is measured by the service. |
 
 `flag` criteria (the `critical` one) carry **no points**. `true` means a gross violation was found: insulting the client, offering a paid service that bypasses the company, or disclosing confidential data. Offering it is enough to set the flag.
 

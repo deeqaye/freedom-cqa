@@ -1,5 +1,5 @@
 import { api, getRole } from "../api.js";
-import { CHANNEL, esc, fmtNum, modal, runBatch, scoreTone, toast } from "../ui.js";
+import { CHANNEL, esc, fmtNum, modal, costLine, runBatch, scoreTone, toast } from "../ui.js";
 
 const STATUS = { ok: ["good", "Оценён"], error: ["bad", "Ошибка"], queued: ["info", "В очереди"], running: ["info", "Оценивается"] };
 
@@ -102,7 +102,7 @@ export async function mount(el) {
     btn.disabled = true;
     try {
       const p = await runBatch(el.querySelector("[data-progress]"), { ...body, checklist_id: el.querySelector("[data-cl]").value });
-      toast(`Оценка завершена: ${p.ok || 0} успешно${p.error ? `, ошибок ${p.error}` : ""}`, !!p.error);
+      toast(`Оценка завершена: ${p.ok || 0} успешно${p.error ? `, ошибок ${p.error}` : ""}${p.cost ? ". " + costLine(p.cost) : ""}`, !!p.error);
       selected.clear();
       await load();
     } catch (err) { toast(err.message, true); } finally { btn.disabled = false; }

@@ -40,6 +40,7 @@ Without Postgres (`DATABASE_URL` unset), it uses SQLite in `data/cqa.db`.
 | `GET /api/conversations/{id}/evaluation` | per-criterion value, points, rationale, evidence, sections, total |
 | `POST /api/appeals` · `POST /api/appeals/{id}/decision` (header `X-Role: lead\|admin`) | dispute a criterion / accept or reject; the total is recalculated and the original is kept |
 | `GET /api/stats/overview?period=week\|month` · `/api/stats/operators/{name}` | quality stats |
+| `GET /api/stats/cost?group_id=&ids=` | processing time and cost: per conversation, per 1000, per 1M tokens, by channel and model |
 | `GET /api/audio/{conversation_id}` | call recording (cached, seekable) |
 | `GET /api/export/{group_id}?checklist_version_id=` | `results.json`, schema 1.0 |
 
@@ -48,6 +49,21 @@ Without Postgres (`DATABASE_URL` unset), it uses SQLite in `data/cqa.db`.
 - N/A criteria are excluded and their weight is redistributed: `final = earned / applicable weight × 100`, rounded to 2 decimals (half up).
 - `critical` is reported as a separate flag and does not zero the score.
 - See `backend/app/services/scoring.py` and its tests (the appendix example gives 85.38).
+
+## Processing cost
+Each evaluation stores its time (`duration_s`, the evaluator call only) and `usage` (tokens, `cost_usd`).
+If the evaluator reports tokens without a cost, the service prices them from the table in
+`backend/app/services/cost.py` (USD per 1M tokens; extend it with env `MODEL_PRICES='{"model": {"input": 1, "output": 5}}'`).
+- UI: the card header shows time, tokens and cost of the evaluation; a batch run ends with a summary line; **Аналитика** (admin) has a "Стоимость обработки" panel.
+- API: `GET /api/stats/cost?ids=<batch ids>` gives one run, including its wall-clock time and throughput; `?group_id=DEV` gives the latest evaluation of each conversation.
+- `scripts/export_results.py ... --evaluate` prints the same summary.
+
+| DEV (65 conversations) | value |
+|---|---|
+| model | _TBD_ |
+| time per conversation (avg / p95) | _TBD_ |
+| tokens per conversation (in → out) | _TBD_ |
+| cost per conversation / per 1000 | _TBD_ |
 
 ## Submitting results
 ```bash

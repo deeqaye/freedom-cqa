@@ -1,5 +1,5 @@
 import { api, getRole } from "../api.js";
-import { esc, fmtNum, runBatch, toast } from "../ui.js";
+import { esc, fmtNum, costLine, runBatch, toast } from "../ui.js";
 
 const TYPES = { binary: "Да / Нет", scale: "Шкала", flag: "Флаг (без баллов)" };
 const blank = () => ({ id: "", section: "", title: "", type: "binary", weight: 10, na_allowed: false, description: "", na_condition: "", prompt_hint: "", _new: true });
@@ -125,7 +125,7 @@ export async function mount(el) {
     e.target.disabled = true;
     try {
       const p = await runBatch(el.querySelector("[data-progress]"), { group_id: el.querySelector("[data-group]").value, checklist_id: clId });
-      toast(`Готово: ${p.ok || 0} оценено${p.error ? `, ошибок ${p.error}` : ""}`, !!p.error);
+      toast(`Готово: ${p.ok || 0} оценено${p.error ? `, ошибок ${p.error}` : ""}${p.cost ? ". " + costLine(p.cost) : ""}`, !!p.error);
     } catch (err) { toast(err.message, true); } finally { e.target.disabled = false; }
   };
 

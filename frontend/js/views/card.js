@@ -1,7 +1,7 @@
 import { api, getRole } from "../api.js";
 import { createPlayer } from "../components/player.js";
 import {
-  CHANNEL, LANG, MARK, SPEAKER, esc, fmtNum, fmtTime, fmtTs, fmtValue, modal, optionsHtml, scoreTone, toast, tone, valueOptions,
+  CHANNEL, LANG, MARK, SPEAKER, esc, fmtNum, fmtTime, fmtTs, fmtValue, modal, optionsHtml, scoreTone, toast, tone, valueOptions, fmtDur, fmtUsd,
 } from "../ui.js";
 
 const AP_STATUS = { open: ["warn", "Апелляция на рассмотрении"], accepted: ["good", "Апелляция принята"], rejected: ["na", "Апелляция отклонена"] };
@@ -104,7 +104,7 @@ export async function mount(el, { id }) {
 
     scoreEl.innerHTML = `
       <div class="row"><h2 style="margin:0">Оценка качества</h2><span class="spacer"></span>
-        <span class="small muted">Чек-лист v${ev.checklist.version} · ${esc(ev.model.name || ev.evaluator)}</span></div>
+        <span class="small muted">Чек-лист v${ev.checklist.version} · ${esc(ev.model.name || ev.evaluator)}${usageText(ev)}</span></div>
       ${ev.critical_flag ? `<div class="alert bad" style="margin-top:10px">⚠ Выявлена грубая ошибка — отмечено отдельно, итог не обнуляется</div>` : ""}
       <div class="score-head" style="margin-top:12px">
         <div class="ring" role="img" aria-label="Итоговый балл ${fmtNum(s)} из 100">
@@ -199,4 +199,14 @@ export async function mount(el, { id }) {
 
   await load();
   return { unmount() { clearTimeout(pollTimer); player && player.destroy(); } };
+}
+
+/** " · 4.2 с · 3 100 → 600 токенов · $0.012" for the score header. */
+function usageText(ev) {
+  const u = ev.usage || {}, parts = [];
+  if (ev.duration_s != null) parts.push(fmtDur(ev.duration_s));
+  if (u.input_tokens != null || u.output_tokens != null)
+    parts.push(`${(u.input_tokens || 0).toLocaleString("ru")} → ${(u.output_tokens || 0).toLocaleString("ru")} токенов`);
+  if (u.cost_usd != null) parts.push(fmtUsd(u.cost_usd) + (u.cost_source === "price_table" ? " (по тарифу)" : ""));
+  return parts.length ? " · " + parts.join(" · ") : "";
 }

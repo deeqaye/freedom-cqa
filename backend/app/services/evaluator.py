@@ -12,6 +12,7 @@ from nlp import get_evaluator
 from ..config import EVAL_WORKERS
 from ..db import SessionLocal
 from ..models import ChecklistVersion, Conversation, Evaluation, now
+from .cost import normalize_usage
 from .ingest import conversation_payload
 from .scoring import compute_score, validate_results
 
@@ -61,7 +62,7 @@ def run_one(evaluation_id: int) -> None:
             ev.critical_flag = breakdown["critical_flag"]
             ev.model_mode = (out.get("model") or {}).get("mode")
             ev.model_name = (out.get("model") or {}).get("name")
-            ev.usage = out.get("usage")
+            ev.usage = normalize_usage(out.get("usage"), ev.model_name)
             ev.status, ev.error = "ok", None
         except Exception as e:  # noqa: BLE001 — any evaluator failure is recorded, never turned into a zero
             log.exception("evaluation %s failed", evaluation_id)
@@ -69,6 +70,9 @@ def run_one(evaluation_id: int) -> None:
         ev.duration_s = round(time.time() - t0, 2)
         ev.finished_at = now()
         db.commit()
+        u = ev.usage or {}
+        log.info("evaluation %s %s %s: %.2fs, in=%s out=%s tokens, $%s", evaluation_id, ev.conversation_id, ev.status,
+                 ev.duration_s, u.get("input_tokens"), u.get("output_tokens"), u.get("cost_usd"))
     finally:
         db.close()
 

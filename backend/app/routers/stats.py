@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..models import Appeal, Conversation, Evaluation
+from ..services.cost import PRICES, summarize
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 UNKNOWN = "Не определён"
@@ -96,3 +97,27 @@ def operator_stats(operator: str, period: Literal["week", "month"] = "week", gro
     return {"operator": operator, **_summary(rows, period),
             "conversations": [{"id": c.id, "language": c.language, "final_score": ev.final_score,
                                "critical_flag": ev.critical_flag} for ev, c in rows]}
+
+
+@router.get("/cost")
+def cost(group_id: str | None = None, ids: str | None = None, evaluator: str | None = None, latest: bool = True,
+         db: Session = Depends(get_db)):
+    """Time per evaluation and USD per token. `ids` = one batch (comma-separated evaluation ids); otherwise
+    finished evaluations, by default only the latest per conversation. Imported results (no usage) are skipped."""
+    q = select(Evaluation, Conversation.channel).join(Conversation, Conversation.id == Evaluation.conversation_id) \
+        .where(Evaluation.status.in_(("ok", "error"))).order_by(Evaluation.id)
+    if ids:
+        q = q.where(Evaluation.id.in_([int(x) for x in ids.split(",") if x]))
+    else:
+        q = q.where(Evaluation.evaluator != "import")
+        if group_id:
+            q = q.where(Conversation.dataset_group_id == group_id)
+        if evaluator:
+            q = q.where(Evaluation.evaluator == evaluator)
+    rows = db.execute(q).all()
+    if latest and not ids:
+        rows = list({ev.conversation_id: (ev, ch) for ev, ch in rows}.values())
+    out = summarize(rows)
+    if not ids:  # evaluations from different runs: elapsed time between them is not a processing time
+        out["time"]["wall_clock_s"] = out["time"]["per_minute"] = None
+    return {**out, "prices_usd_per_1m": PRICES}

@@ -1,5 +1,5 @@
 import { api, getRole } from "../api.js";
-import { attachTips, esc, fmtNum, scoreTone } from "../ui.js";
+import { attachTips, esc, fmtDur, fmtNum, fmtUsd, scoreTone } from "../ui.js";
 
 export async function mount(el) {
   const isAdmin = getRole() !== "operator";
@@ -72,7 +72,30 @@ export async function mount(el) {
           <div class="card"><h2>По языкам</h2><table class="tbl"><thead><tr><th>Язык</th><th class="num">Средний балл</th></tr></thead><tbody>
             ${Object.entries(d.by_language).map(([l, v]) => `<tr><td>${esc(l)}</td><td class="num">${fmtNum(v)}</td></tr>`).join("")}</tbody></table>
             <h3 style="margin-top:14px">Апелляции</h3><p>Открыто: <b>${d.appeals.open}</b> · принято: <b>${d.appeals.accepted}</b> · отклонено: <b>${d.appeals.rejected}</b></p></div>
-        </div>`}`;
+        </div>`}
+      ${!operator && isAdmin ? costCard(await api.get("/api/stats/cost").catch(() => null)) : ""}`;
+  }
+
+  function costCard(c) {
+    if (!c || !c.evaluations) return `<div class="card"><h2>Стоимость обработки</h2><div class="empty">Нет запусков оценщика (импортированные результаты не измерялись)</div></div>`;
+    const CH = { "agent chat": "Чаты", "voice call": "Звонки" };
+    const t = [["Время на диалог (сред. / p95)", `${fmtDur(c.time.avg_s)} / ${fmtDur(c.time.p95_s)}`],
+      ["Токенов на диалог (вход → выход)", c.tokens.avg_input == null ? "—" : `${c.tokens.avg_input.toLocaleString("ru")} → ${c.tokens.avg_output.toLocaleString("ru")}`],
+      ["Стоимость на диалог", fmtUsd(c.cost.avg_per_evaluation_usd)],
+      ["На 1000 диалогов", fmtUsd(c.cost.per_1000_usd)]];
+    return `<div class="card"><h2>Стоимость обработки</h2>
+      <div class="tiles">${t.map(([k, v]) => `<div class="tile"><div class="k">${k}</div><div class="v" style="font-size:22px">${v}</div></div>`).join("")}</div>
+      <p class="small muted">Последняя оценка каждого диалога: ${c.evaluations} (ошибок ${c.errors}). Всего ${c.tokens.total.toLocaleString("ru")} токенов,
+        ${fmtUsd(c.cost.total_usd)}${c.cost.usd_per_1m_tokens != null ? ` (${fmtUsd(c.cost.usd_per_1m_tokens)} за 1M токенов)` : ""}.
+        ${c.cost.unpriced ? `Без стоимости: ${c.cost.unpriced} — оценщик не вернул usage, модели нет в тарифах.` : ""}</p>
+      <div class="grid2">
+        <table class="tbl"><thead><tr><th>Канал</th><th class="num">Диалогов</th><th class="num">Время</th><th class="num">Токенов</th><th class="num">$ / диалог</th></tr></thead><tbody>
+          ${Object.entries(c.by_channel).map(([k, v]) => `<tr><td>${esc(CH[k] || k)}</td><td class="num">${v.count}</td><td class="num">${fmtDur(v.avg_s)}</td>
+            <td class="num">${v.avg_tokens == null ? "—" : v.avg_tokens.toLocaleString("ru")}</td><td class="num">${fmtUsd(v.avg_cost_usd)}</td></tr>`).join("")}</tbody></table>
+        <table class="tbl"><thead><tr><th>Модель</th><th class="num">Оценок</th><th class="num">Тариф вход / выход, $ за 1M</th><th class="num">Итого</th></tr></thead><tbody>
+          ${c.by_model.map(m => `<tr><td>${esc(m.model)}</td><td class="num">${m.count}</td>
+            <td class="num">${m.price_per_1m ? `${m.price_per_1m.input} / ${m.price_per_1m.output}` : "—"}</td><td class="num">${fmtUsd(m.cost_usd)}</td></tr>`).join("")}</tbody></table>
+      </div></div>`;
   }
 
   el.querySelector("[data-period]").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (b) { period = b.dataset.p; draw(); } });

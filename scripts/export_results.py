@@ -21,6 +21,8 @@ from app.config import RESULTS_DIR  # noqa: E402
 from app.db import Base, SessionLocal, engine  # noqa: E402
 from app.models import Checklist, ChecklistVersion, Conversation  # noqa: E402
 from app.services import evaluator  # noqa: E402
+from app.services.cost import summarize  # noqa: E402
+from app.models import Evaluation  # noqa: E402
 from app.services.export import build_results, check_results  # noqa: E402
 
 
@@ -48,6 +50,16 @@ def main() -> int:
             evs = evaluator.create_jobs(db, ids, ver)
             print(f"evaluating {len(evs)} conversations with {cl.id} v{ver.version} ...")
             evaluator.run_sync([e.id for e in evs])
+            db.expire_all()
+            ch = dict(db.execute(select(Conversation.id, Conversation.channel)).all())
+            c = summarize([(db.get(Evaluation, e.id), ch[e.conversation_id]) for e in evs])
+            t, k, u = c["time"], c["tokens"], c["cost"]
+            print(f"time: {t['wall_clock_s']}s wall, {t['avg_s']}s avg / p95 {t['p95_s']}s per conversation")
+            print(f"tokens: avg {k['avg_input']} in / {k['avg_output']} out per conversation, total {k['total']}")
+            print(f"cost: total ${u['total_usd']}, ${u['avg_per_evaluation_usd']} per conversation, "
+                  f"${u['per_1000_usd']} per 1000 ({u['unpriced']} unpriced)")
+            for name, v in c["by_channel"].items():
+                print(f"  {name}: {v['count']} x {v['avg_s']}s, {v['avg_tokens']} tokens, ${v['avg_cost_usd']}")
         db.expire_all()
         doc = build_results(db, args.group_id, version_id)
 
