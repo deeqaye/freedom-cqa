@@ -118,7 +118,8 @@ def list_conversations(group_id: str | None = None, language: str | None = None,
         "started_at": c.started_at,
         "evaluation": None if c.id not in evs else {
             "id": evs[c.id].id, "status": evs[c.id].status, "final_score": evs[c.id].final_score,
-            "original_score": evs[c.id].original_score, "critical_flag": evs[c.id].critical_flag},
+            "original_score": evs[c.id].original_score, "critical_flag": evs[c.id].critical_flag,
+            "checklist_version_id": evs[c.id].checklist_version_id},
     } for c in convs]
 
 

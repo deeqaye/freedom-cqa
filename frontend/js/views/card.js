@@ -11,6 +11,8 @@ export async function mount(el, { id }) {
   const byTurn = Object.fromEntries(conv.transcript.map(m => [m.turn, m]));
   const isCall = !!conv.audio_url;
   let player = null, ev = null, appeals = [], pollTimer = 0;
+  let evals = [], evId = null, runCl = null;  // evaluations per checklist version; selected one; checklist to run
+  const checklists = await api.get("/api/checklists").catch(() => []);
 
   const last = conv.transcript[conv.transcript.length - 1];
   const dur = isCall ? fmtTime(last.t) : last.timestamp;
@@ -66,7 +68,9 @@ export async function mount(el, { id }) {
 
   async function load() {
     try {
-      ev = await api.get(`/api/conversations/${encodeURIComponent(conv.id)}/evaluation`);
+      evals = await api.get(`/api/conversations/${encodeURIComponent(conv.id)}/evaluations`);
+      ev = evId ? await api.get(`/api/evaluations/${evId}`)
+        : await api.get(`/api/conversations/${encodeURIComponent(conv.id)}/evaluation`);
       appeals = await api.get(`/api/appeals?evaluation_id=${ev.id}`);
     } catch (e) {
       if (e.status !== 404) throw e;
@@ -78,19 +82,26 @@ export async function mount(el, { id }) {
 
   function drawScore() {
     const actions = el.querySelector("[data-head-actions]");
-    actions.innerHTML = `<button class="btn ghost" data-run>${ev ? "Переоценить" : "Оценить"}</button>`;
+    runCl = runCl || ev?.checklist.id || checklists[0]?.id;
+    actions.innerHTML = `${checklists.length > 1 ? `<select data-run-cl aria-label="Чек-лист для оценки">${checklists.map(c =>
+        `<option value="${esc(c.id)}" ${c.id === runCl ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select>` : ""}
+      <button class="btn ghost" data-run>${ev ? "Переоценить" : "Оценить"}</button>`;
+    const clSel = actions.querySelector("[data-run-cl]");
+    if (clSel) clSel.onchange = () => { runCl = clSel.value; };
     actions.querySelector("[data-run]").onclick = async e => {
       e.target.disabled = true;
       try {
-        await api.post("/api/evaluations", { conversation_ids: [conv.id], wait: true });
+        const r = await api.post("/api/evaluations", { conversation_ids: [conv.id], checklist_id: runCl, wait: true });
+        evId = r.evaluations[0].id;
         toast("Оценка готова");
         await load();
       } catch (err) { toast(err.message, true); } finally { e.target.disabled = false; }
     };
-    if (!ev) { scoreEl.innerHTML = `<h2>Оценка качества</h2><div class="empty">Диалог ещё не оценён.</div>`; return; }
-    if (ev.status === "queued" || ev.status === "running") { scoreEl.innerHTML = `<h2>Оценка качества</h2><div class="empty">Оценивается…</div>`; return; }
+    const cmp = compareHtml();
+    if (!ev) { scoreEl.innerHTML = `${cmp}<h2>Оценка качества</h2><div class="empty">Диалог ещё не оценён.</div>`; return; }
+    if (ev.status === "queued" || ev.status === "running") { scoreEl.innerHTML = `${cmp}<h2>Оценка качества</h2><div class="empty">Оценивается…</div>`; return; }
     if (ev.status === "error") {
-      scoreEl.innerHTML = `<h2>Оценка качества</h2><div class="alert bad">Оценка не выполнена</div><p class="small">${esc(ev.error)}</p>`;
+      scoreEl.innerHTML = `${cmp}<h2>Оценка качества</h2><div class="alert bad">Оценка не выполнена</div><p class="small">${esc(ev.error)}</p>`;
       return;
     }
 
@@ -102,9 +113,9 @@ export async function mount(el, { id }) {
     const lost = ev.criteria.filter(c => c.type !== "flag" && c.points != null && c.points < c.effective_weight - 0.005);
     const sections = Object.entries(ev.sections || {});
 
-    scoreEl.innerHTML = `
+    scoreEl.innerHTML = `${cmp}
       <div class="row"><h2 style="margin:0">Оценка качества</h2><span class="spacer"></span>
-        <span class="small muted">Чек-лист v${ev.checklist.version} · ${esc(ev.model.name || ev.evaluator)}${usageText(ev)}</span></div>
+        <span class="small muted">${esc(ev.checklist.name)} v${ev.checklist.version} · ${esc(ev.model.name || ev.evaluator)}${usageText(ev)}</span></div>
       ${ev.critical_flag ? `<div class="alert bad" style="margin-top:10px">⚠ Выявлена грубая ошибка — отмечено отдельно, итог не обнуляется</div>` : ""}
       <div class="score-head" style="margin-top:12px">
         <div class="ring" role="img" aria-label="Итоговый балл ${fmtNum(s)} из 100">
@@ -123,6 +134,17 @@ export async function mount(el, { id }) {
       <h3 style="margin-top:14px">Критерии</h3>
       ${ev.criteria.map(c => critRow(c, apBy[c.criterion_id] || [])).join("")}
       <p class="small muted" style="margin-top:12px">Вес N/A-критериев перераспределён между применимыми. Баллы — после перераспределения.</p>`;
+  }
+
+  /** Scores of this conversation under each checklist version; click to switch. */
+  function compareHtml() {
+    if (evals.length < 2) return "";
+    return `<div class="compare"><h3 style="margin:0 0 6px">Сравнение по чек-листам</h3>
+      <table class="tbl"><tbody>${evals.map(r => `
+        <tr class="click ${ev && r.evaluation_id === ev.id ? "sel" : ""}" data-cmp="${r.evaluation_id}" title="Показать эту оценку">
+          <td>${esc(r.checklist_name)} <span class="muted">v${r.version}</span></td>
+          <td class="num">${r.status === "ok" ? `<span class="chip ${scoreTone(r.final_score)}">${fmtNum(r.final_score)}</span>` : esc(r.status)}</td>
+          <td>${r.critical_flag ? '<span class="chip bad">⚠</span>' : ""}</td></tr>`).join("")}</tbody></table></div>`;
   }
 
   function critRow(c, aps) {
@@ -155,6 +177,8 @@ export async function mount(el, { id }) {
   }
 
   scoreEl.addEventListener("click", e => {
+    const cmpRow = e.target.closest("[data-cmp]");
+    if (cmpRow) { evId = +cmpRow.dataset.cmp; runCl = null; ev = null; return load(); }
     const evb = e.target.closest("[data-ev]");
     if (evb) return jump([+evb.dataset.ev]);
     const j = e.target.closest("[data-jump]");

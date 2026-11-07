@@ -17,7 +17,9 @@ Without Docker:
 uv venv --python 3.12 .venv && uv pip install -p .venv -r requirements.txt
 .venv/bin/uvicorn app.main:app --app-dir backend --reload
 ```
-On first start the service seeds the default checklist and every dataset snapshot in `data/*.json`.
+On first start the service seeds the checklists in `seed/checklist_*.json` and every dataset snapshot in `data/*.json`.
+Two checklists ship: the organizers' `chat-quality` (used for `results.json`) and a mock `compliance` checklist
+(security, risk disclosure, next step) for comparing how the same conversations score under different checklists.
 
 ## Deploy (Render)
 1. Push this repo to GitHub.
@@ -37,12 +39,17 @@ Without Postgres (`DATABASE_URL` unset), it uses SQLite in `data/cqa.db`.
 | `GET /api/conversations` · `/api/conversations/{id}` | list and card (transcript with 1-based `turn`) |
 | `GET/PUT /api/checklists/chat-quality` | read the checklist / save a new version (header `X-Role: admin\|lead`) |
 | `POST /api/evaluations` `{"group_id":"DEV"}` or `{"conversation_ids":[...], "wait":true}` | run an evaluation |
-| `GET /api/conversations/{id}/evaluation` | per-criterion value, points, rationale, evidence, sections, total |
+| `GET /api/conversations/{id}/evaluation?checklist_id=` | per-criterion value, points, rationale, evidence, sections, total (latest, or latest under one checklist) |
+| `GET /api/conversations/{id}/evaluations` | this conversation's score under each checklist version |
+| `GET /api/stats/compare?group_id=` | the same conversations under each checklist: averages, critical count, biggest differences |
 | `POST /api/appeals` · `POST /api/appeals/{id}/decision` (header `X-Role: lead\|admin`) | dispute a criterion / accept or reject; the total is recalculated and the original is kept |
-| `GET /api/stats/overview?period=week\|month` · `/api/stats/operators/{name}` | quality stats |
+| `GET /api/stats/overview?period=week\|month&checklist_id=` · `/api/stats/operators/{name}` | quality stats |
 | `GET /api/stats/cost?group_id=&ids=` | processing time and cost: per conversation, per 1000, per 1M tokens, by channel and model |
 | `GET /api/audio/{conversation_id}` | call recording (cached, seekable) |
 | `GET /api/export/{group_id}?checklist_version_id=` | `results.json`, schema 1.0 |
+
+## Roles
+The UI page **Справочник** (`#/help`) lists what each role can do. In short: an operator views results and files appeals; a lead (главный специалист) also edits checklists and decides appeals; an admin can also clear and reload data. The demo has no login: the role switcher sends `X-Role`, and the server checks it on actions that change data.
 
 ## Scoring
 - "Yes" earns the full weight and "No" earns 0. A scale value earns `weight × value / top step`.

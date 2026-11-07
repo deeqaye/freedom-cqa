@@ -19,14 +19,17 @@ log = logging.getLogger("cqa.seed")
 
 
 def seed_checklist(db: Session) -> None:
-    doc = json.loads((SEED_DIR / "checklist_default.json").read_text(encoding="utf-8"))
-    if db.get(Checklist, doc["id"]):
-        return
-    db.add(Checklist(id=doc["id"], name=doc["name"], active_version=1))
-    db.add(ChecklistVersion(checklist_id=doc["id"], version=1, criteria=doc["criteria"], note=doc.get("note"),
-                            created_by="seed"))
-    db.commit()
-    log.info("seeded checklist %s v1", doc["id"])
+    """Seed every seed/checklist_*.json that is not in the DB yet (default checklist first)."""
+    files = sorted(SEED_DIR.glob("checklist_*.json"), key=lambda f: (f.name != "checklist_default.json", f.name))
+    for f in files:
+        doc = json.loads(f.read_text(encoding="utf-8"))
+        if db.get(Checklist, doc["id"]):
+            continue
+        db.add(Checklist(id=doc["id"], name=doc["name"], active_version=1))
+        db.add(ChecklistVersion(checklist_id=doc["id"], version=1, criteria=doc["criteria"], note=doc.get("note"),
+                                created_by="seed"))
+        db.commit()
+        log.info("seeded checklist %s v1", doc["id"])
 
 
 def seed_datasets(db: Session) -> int:

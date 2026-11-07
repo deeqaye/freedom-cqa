@@ -4,15 +4,21 @@ import { attachTips, esc, fmtDur, fmtNum, fmtUsd, scoreTone } from "../ui.js";
 export async function mount(el) {
   const isAdmin = getRole() !== "operator";
   let period = "week", operator = null;
+  const lists = await api.get("/api/checklists").catch(() => []);
+  let clId = lists[0]?.id || "";
   const overview = await api.get("/api/stats/overview");
   const operators = overview.operators.map(o => o.operator);
   operator = operators[0];
-  const checklist = await api.get("/api/checklists/chat-quality").catch(() => null);
-  const titles = Object.fromEntries((checklist?.version.criteria || []).map(c => [c.id, c.title]));
+  let titles = {};
+  async function loadTitles() {
+    const cl = clId ? await api.get(`/api/checklists/${encodeURIComponent(clId)}`).catch(() => null) : null;
+    titles = Object.fromEntries((cl?.version.criteria || []).map(c => [c.id, c.title]));
+  }
 
   el.innerHTML = `
     <div class="page-head"><div><h1>Аналитика</h1><div class="sub">${isAdmin ? "Качество по всем операторам" : "Моя статистика"}</div></div>
       <div class="row">
+        ${lists.length > 1 ? `<select data-cl aria-label="Чек-лист">${lists.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}</select>` : ""}
         <select data-op ${isAdmin ? "" : ""}>${isAdmin ? `<option value="">Все операторы</option>` : ""}${operators.map(o => `<option ${!isAdmin && o === operator ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
         <div class="seg" data-period><button data-p="week" class="on">По неделям</button><button data-p="month">По месяцам</button></div>
       </div></div>
@@ -48,8 +54,9 @@ export async function mount(el) {
 
   async function draw() {
     el.querySelectorAll("[data-p]").forEach(b => b.classList.toggle("on", b.dataset.p === period));
-    const d = operator ? await api.get(`/api/stats/operators/${encodeURIComponent(operator)}?period=${period}`)
-      : await api.get(`/api/stats/overview?period=${period}`);
+    const q = `period=${period}${clId ? `&checklist_id=${encodeURIComponent(clId)}` : ""}`;
+    const d = operator ? await api.get(`/api/stats/operators/${encodeURIComponent(operator)}?${q}`)
+      : await api.get(`/api/stats/overview?${q}`);
     const tiles = [["Средний балл", fmtNum(d.avg_score)], ["Оценено диалогов", d.count], ["С грубыми ошибками", d.critical_count]];
     if (!operator) tiles.push(["Открытых апелляций", d.appeals.open]);
     else tiles.push(["Лучший / худший", d.conversations.length ? `${fmtNum(Math.max(...d.conversations.map(c => c.final_score ?? 0)), 0)} / ${fmtNum(Math.min(...d.conversations.map(c => c.final_score ?? 100)), 0)}` : "—"]);
@@ -73,7 +80,31 @@ export async function mount(el) {
             ${Object.entries(d.by_language).map(([l, v]) => `<tr><td>${esc(l)}</td><td class="num">${fmtNum(v)}</td></tr>`).join("")}</tbody></table>
             <h3 style="margin-top:14px">Апелляции</h3><p>Открыто: <b>${d.appeals.open}</b> · принято: <b>${d.appeals.accepted}</b> · отклонено: <b>${d.appeals.rejected}</b></p></div>
         </div>`}
+      ${!operator && isAdmin ? compareCard(await api.get("/api/stats/compare").catch(() => null)) : ""}
       ${!operator && isAdmin ? costCard(await api.get("/api/stats/cost").catch(() => null)) : ""}`;
+  }
+
+  /** The same conversations scored under each checklist version. */
+  function compareCard(d) {
+    if (!d || d.columns.length < 2) return `<div class="card"><h2>Сравнение чек-листов</h2><div class="empty">Оцените один набор по двум чек-листам
+      (переключатель на странице «Чек-листы» или в карточке диалога), чтобы сравнить результаты.</div></div>`;
+    const cols = d.columns, shared = d.rows.filter(r => Object.keys(r.critical).length === cols.length);
+    const head = cols.map(c => `<th class="num">${esc(c.checklist_name)} <span class="muted">v${c.version}</span></th>`).join("");
+    const delta = r => { const v = cols.map(c => r.scores[c.version_id]); return v.every(x => x != null) ? Math.max(...v) - Math.min(...v) : -1; };
+    const top = shared.slice().sort((a, b) => delta(b) - delta(a)).slice(0, 10);
+    return `<div class="card"><h2>Сравнение чек-листов</h2>
+      <table class="tbl"><thead><tr><th></th>${head}</tr></thead><tbody>
+        <tr><td>Оценено диалогов</td>${cols.map(c => `<td class="num">${c.count}</td>`).join("")}</tr>
+        <tr><td>Средний балл (все оценённые)</td>${cols.map(c => `<td class="num">${fmtNum(c.avg_score)}</td>`).join("")}</tr>
+        <tr><td>Средний балл (общие ${d.shared_count})</td>${cols.map(c => `<td class="num"><b>${fmtNum(d.shared_avg[c.version_id])}</b></td>`).join("")}</tr>
+        <tr><td>С грубыми ошибками</td>${cols.map(c => `<td class="num">${c.critical_count}</td>`).join("")}</tr>
+      </tbody></table>
+      ${top.length ? `<h3 style="margin-top:14px">Наибольшее расхождение</h3>
+        <table class="tbl"><thead><tr><th>Диалог</th>${head}<th class="num">Разница</th></tr></thead><tbody>
+        ${top.map(r => `<tr class="click" data-c="${esc(r.conversation_id)}"><td>${esc(r.conversation_id)}</td>
+          ${cols.map(c => `<td class="num"><span class="chip ${scoreTone(r.scores[c.version_id])}">${fmtNum(r.scores[c.version_id])}</span></td>`).join("")}
+          <td class="num">${fmtNum(delta(r))}</td></tr>`).join("")}</tbody></table>` : ""}
+      <p class="small muted">«Общие» — диалоги, оценённые по всем столбцам; сравнивать средние стоит по ним.</p></div>`;
   }
 
   function costCard(c) {
@@ -99,6 +130,8 @@ export async function mount(el) {
   }
 
   el.querySelector("[data-period]").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (b) { period = b.dataset.p; draw(); } });
+  const clSel = el.querySelector("[data-cl]");
+  if (clSel) clSel.onchange = async () => { clId = clSel.value; await loadTitles(); draw(); };
   el.querySelector("[data-op]").onchange = e => { operator = e.target.value; draw(); };
   body.addEventListener("click", e => {
     const o = e.target.closest("[data-o]");
@@ -106,5 +139,6 @@ export async function mount(el) {
     const c = e.target.closest("[data-c]");
     if (c) location.hash = `#/c/${encodeURIComponent(c.dataset.c)}`;
   });
+  await loadTitles();
   await draw();
 }

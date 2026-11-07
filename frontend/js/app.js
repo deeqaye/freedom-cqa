@@ -9,6 +9,7 @@ const routes = [
   [/^#\/checklists$/, "checklists", () => import("./views/checklists.js")],
   [/^#\/appeals(?:\/(\d+))?$/, "appeals", () => import("./views/appeals.js"), m => ({ id: m[1] && +m[1] })],
   [/^#\/analytics$/, "analytics", () => import("./views/analytics.js")],
+  [/^#\/help$/, "help", () => import("./views/help.js")],
 ];
 
 const view = document.getElementById("view");

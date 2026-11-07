@@ -24,5 +24,5 @@ def test_reset_stays_empty_after_restart_and_demo_reload():
         # reset checklists back to the seed v1
         c.put("/api/checklists/chat-quality", json={"criteria": c.get("/api/checklists/chat-quality").json()["version"]["criteria"]})
         r = c.post("/api/admin/reset", json={"confirm": "DELETE", "reset_checklists": True}, headers={"X-Role": "admin"})
-        assert r.json()["now"]["checklist_versions"] == 1
+        assert r.json()["now"]["checklist_versions"] == 2  # seed v1 of each seed checklist
         c.post("/api/admin/seed-demo", headers={"X-Role": "admin"})  # leave data for other tests

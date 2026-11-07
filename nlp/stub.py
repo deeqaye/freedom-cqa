@@ -7,6 +7,9 @@ import re
 GREET = re.compile(r"здравствуйте|добр(ый|ое)|привет|сәлем|қайырлы|hello|hi\b|good (morning|afternoon|evening)", re.I)
 INTRO = re.compile(r"меня зовут|my name is|менің атым|атым", re.I)
 BYE = re.compile(r"до свидания|хорошего|всего доброго|сау болыңыз|goodbye|have a (nice|great|good)|bye", re.I)
+RISK = re.compile(r"риск|не гарантир|убыт|тәуекел|risk|not guaranteed", re.I)
+INVEST = re.compile(r"акци|облигац|сделк|доходн|инвест|портфел|бирж|stock|bond|trade|invest", re.I)
+NEXT = re.compile(r"обращени|заявк|в течение|рабоч(их|ие) дн|срок|свяжемся|ticket|within|business day", re.I)
 IDENT = re.compile(r"кодов|подтверд|верификац|идентифик|кодты|растаңыз|verify|verification|confirm your", re.I)
 
 
@@ -34,6 +37,19 @@ def evaluate(conversation: dict, checklist: dict) -> dict:
                 value, ev, rat = True, [any_ident[0]["turn"]], "Оператор запросил подтверждение личности."
             else:
                 value, rat = (None if c.get("na_allowed") else False), "Запрос не требовал идентификации (stub)."
+        elif cid == "risk_disclosure":
+            risk = [t for t in op if RISK.search(t["text"])]
+            if risk:
+                value, ev, rat = True, [risk[0]["turn"]], "Оператор упомянул риски."
+            elif any(INVEST.search(t["text"]) for t in turns):
+                value, rat = False, "Обсуждались инвестиции, предупреждения о рисках нет."
+            else:
+                value, rat = (None if c.get("na_allowed") else True), "Инвестиции не обсуждались (stub)."
+        elif cid == "next_step":
+            nxt = [t for t in op if NEXT.search(t["text"])]
+            value = bool(nxt)
+            ev = [nxt[0]["turn"]] if nxt else [last["turn"]]
+            rat = "Оператор назвал следующий шаг или срок." if value else "Следующий шаг не назван."
         elif ctype == "flag":
             value, rat = False, "Грубых нарушений не найдено (stub)."
         elif ctype == "scale":

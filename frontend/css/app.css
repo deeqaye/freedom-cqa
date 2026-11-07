@@ -190,3 +190,17 @@ table.tbl { width: 100%; border-collapse: collapse; }
   .cl-crit .wide { grid-column: 1 / -1; }
   .bars .bar-row { grid-template-columns: 110px 1fr 48px; }
 }
+
+/* checklist comparison (card) */
+.compare { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.tbl tr.sel td { background: var(--brand-soft); font-weight: 600; }
+
+/* Справочник */
+.tiles.roles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tile.me { outline: 2px solid var(--brand); }
+.roles-matrix th.me, .roles-matrix td.me { background: var(--brand-soft); }
+.roles-matrix tr.grp td { background: var(--bg); }
+.gloss dt { font-weight: 600; margin-top: 8px; }
+.gloss dd { margin: 2px 0 0; color: var(--text-2); }
+.role-help { display: block; margin: 6px 0 2px; color: inherit; opacity: .8; }
+@media (max-width: 720px) { .tiles.roles { grid-template-columns: 1fr; } }

@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import Appeal, Conversation, Evaluation
+from ..models import Appeal, Checklist, ChecklistVersion, Conversation, Evaluation
 from ..services.cost import PRICES, summarize
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
@@ -31,12 +31,15 @@ def bucket(d: datetime, period: str) -> str:
     return f"{y}-W{w:02d}"
 
 
-def _rows(db: Session, group_id: str | None):
-    """Latest ok evaluation per conversation."""
+def _rows(db: Session, group_id: str | None, checklist_id: str | None = None):
+    """Latest ok evaluation per conversation (optionally only under one checklist)."""
     q = select(Evaluation, Conversation).join(Conversation, Conversation.id == Evaluation.conversation_id) \
         .where(Evaluation.status == "ok").order_by(Evaluation.id)
     if group_id:
         q = q.where(Conversation.dataset_group_id == group_id)
+    if checklist_id:
+        q = q.join(ChecklistVersion, ChecklistVersion.id == Evaluation.checklist_version_id) \
+            .where(ChecklistVersion.checklist_id == checklist_id)
     latest = {}
     for ev, c in db.execute(q).all():
         latest[c.id] = (ev, c)
@@ -71,8 +74,9 @@ def _summary(rows, period: str) -> dict:
 
 
 @router.get("/overview")
-def overview(period: Literal["week", "month"] = "week", group_id: str | None = None, db: Session = Depends(get_db)):
-    rows = _rows(db, group_id)
+def overview(period: Literal["week", "month"] = "week", group_id: str | None = None, checklist_id: str | None = None,
+             db: Session = Depends(get_db)):
+    rows = _rows(db, group_id, checklist_id)
     ops = defaultdict(list)
     for ev, c in rows:
         ops[c.operator_name or UNKNOWN].append((ev, c))
@@ -92,8 +96,8 @@ def overview(period: Literal["week", "month"] = "week", group_id: str | None = N
 
 @router.get("/operators/{operator}")
 def operator_stats(operator: str, period: Literal["week", "month"] = "week", group_id: str | None = None,
-                   db: Session = Depends(get_db)):
-    rows = [(ev, c) for ev, c in _rows(db, group_id) if (c.operator_name or UNKNOWN) == operator]
+                   checklist_id: str | None = None, db: Session = Depends(get_db)):
+    rows = [(ev, c) for ev, c in _rows(db, group_id, checklist_id) if (c.operator_name or UNKNOWN) == operator]
     return {"operator": operator, **_summary(rows, period),
             "conversations": [{"id": c.id, "language": c.language, "final_score": ev.final_score,
                                "critical_flag": ev.critical_flag} for ev, c in rows]}
@@ -121,3 +125,43 @@ def cost(group_id: str | None = None, ids: str | None = None, evaluator: str | N
     if not ids:  # evaluations from different runs: elapsed time between them is not a processing time
         out["time"]["wall_clock_s"] = out["time"]["per_minute"] = None
     return {**out, "prices_usd_per_1m": PRICES}
+
+
+@router.get("/compare")
+def compare(group_id: str | None = None, all_versions: bool = False, db: Session = Depends(get_db)):
+    """Same conversations under different checklists: latest ok evaluation per (conversation, checklist version).
+    By default one column per checklist (its active version, else the newest one with evaluations); all_versions=true shows every version."""
+    q = select(Evaluation, ChecklistVersion, Checklist, Conversation) \
+        .join(ChecklistVersion, ChecklistVersion.id == Evaluation.checklist_version_id) \
+        .join(Checklist, Checklist.id == ChecklistVersion.checklist_id) \
+        .join(Conversation, Conversation.id == Evaluation.conversation_id) \
+        .where(Evaluation.status == "ok").order_by(Evaluation.id)
+    if group_id:
+        q = q.where(Conversation.dataset_group_id == group_id)
+    cells, cols = {}, {}
+    for ev, ver, cl, c in db.execute(q).all():
+        cols[ver.id] = {"version_id": ver.id, "checklist_id": cl.id, "checklist_name": cl.name, "version": ver.version}
+        cells[(c.id, ver.id)] = ev
+    if not all_versions:  # per checklist: its active version, else the newest version that has evaluations
+        active = {cl.id: cl.active_version for cl in db.execute(select(Checklist)).scalars()}
+        pick = {}
+        for vid, col in cols.items():
+            key = (col["version"] == active.get(col["checklist_id"]), col["version"])
+            if key > pick.get(col["checklist_id"], ((False, 0), None))[0]:
+                pick[col["checklist_id"]] = (key, vid)
+        keep = {vid for _, vid in pick.values()}
+        cols = {v: c for v, c in cols.items() if v in keep}
+        cells = {k: e for k, e in cells.items() if k[1] in keep}
+    for vid, col in cols.items():
+        evs = [ev for (cid, v), ev in cells.items() if v == vid]
+        col.update(count=len(evs), avg_score=_avg([e.final_score for e in evs]),
+                   critical_count=sum(bool(e.critical_flag) for e in evs))
+    conv_ids = sorted({cid for cid, _ in cells})
+    rows = [{"conversation_id": cid,
+             "scores": {str(vid): (cells[(cid, vid)].final_score if (cid, vid) in cells else None) for vid in cols},
+             "critical": {str(vid): cells[(cid, vid)].critical_flag for vid in cols if (cid, vid) in cells}}
+            for cid in conv_ids]
+    shared = [r for r in rows if len(r["critical"]) == len(cols)]  # evaluated under every column
+    return {"columns": sorted(cols.values(), key=lambda x: (x["checklist_id"] != "chat-quality", x["checklist_id"], x["version"])),
+            "rows": rows, "shared_count": len(shared),
+            "shared_avg": {str(vid): _avg([r["scores"][str(vid)] for r in shared]) for vid in cols}}

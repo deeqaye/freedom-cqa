@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import ChecklistVersion, Conversation, Evaluation
+from ..models import Checklist, ChecklistVersion, Conversation, Evaluation
 from ..schemas import EvaluateRequest
 from ..services import evaluator
 from ..services.export import build_results, check_results
@@ -31,7 +31,8 @@ def evaluation_out(db: Session, ev: Evaluation) -> dict:
                      "effective_weight": bd.get(c["criterion_id"], {}).get("effective_weight")})
     return {
         "id": ev.id, "conversation_id": ev.conversation_id, "status": ev.status, "error": ev.error,
-        "checklist": {"id": ver.checklist_id, "version": ver.version, "version_id": ver.id},
+        "checklist": {"id": ver.checklist_id, "name": (db.get(Checklist, ver.checklist_id) or Checklist(name="")).name,
+                      "version": ver.version, "version_id": ver.id},
         "evaluator": ev.evaluator, "model": {"mode": ev.model_mode, "name": ev.model_name}, "usage": ev.usage,
         "original_score": ev.original_score, "final_score": ev.final_score, "critical_flag": ev.critical_flag,
         "sections": (ev.final_breakdown or {}).get("sections"),
@@ -77,9 +78,31 @@ def get_evaluation(evaluation_id: int, db: Session = Depends(get_db)):
     return evaluation_out(db, ev)
 
 
+@router.get("/conversations/{conversation_id}/evaluations")
+def list_conversation_evaluations(conversation_id: str, db: Session = Depends(get_db)):
+    """Latest evaluation of this conversation under each checklist version (for comparing checklists)."""
+    q = select(Evaluation, ChecklistVersion, Checklist) \
+        .join(ChecklistVersion, ChecklistVersion.id == Evaluation.checklist_version_id) \
+        .join(Checklist, Checklist.id == ChecklistVersion.checklist_id) \
+        .where(Evaluation.conversation_id == conversation_id).order_by(Evaluation.id)
+    latest = {}
+    for ev, ver, cl in db.execute(q).all():
+        latest[ver.id] = {"evaluation_id": ev.id, "status": ev.status, "checklist_id": cl.id, "checklist_name": cl.name,
+                          "version": ver.version, "version_id": ver.id, "final_score": ev.final_score,
+                          "original_score": ev.original_score, "critical_flag": ev.critical_flag,
+                          "created_at": ev.created_at}
+    return sorted(latest.values(), key=lambda r: r["evaluation_id"], reverse=True)
+
+
 @router.get("/conversations/{conversation_id}/evaluation")
-def get_conversation_evaluation(conversation_id: str, db: Session = Depends(get_db)):
-    ev = latest_eval(db, conversation_id)
+def get_conversation_evaluation(conversation_id: str, checklist_id: str | None = None, db: Session = Depends(get_db)):
+    """Latest evaluation of the conversation (optionally: latest under the given checklist)."""
+    if checklist_id:
+        ev = db.execute(select(Evaluation).join(ChecklistVersion, ChecklistVersion.id == Evaluation.checklist_version_id)
+                        .where(Evaluation.conversation_id == conversation_id, ChecklistVersion.checklist_id == checklist_id)
+                        .order_by(Evaluation.id.desc()).limit(1)).scalar_one_or_none()
+    else:
+        ev = latest_eval(db, conversation_id)
     if not ev:
         raise HTTPException(404, "not evaluated yet")
     return evaluation_out(db, ev)
