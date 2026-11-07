@@ -3,7 +3,7 @@
 This prototype scores operator conversations (chats and calls, in RU, KZ and EN) against a configurable checklist. It shows the evidence behind each score and supports appeals and review.
 
 - **Service** (`backend/`): FastAPI and SQLAlchemy. It handles storage, versioned checklists, deterministic scoring, the evaluation queue and the `results.json` export.
-- **NLP** (`nlp/`): an LLM evaluator behind one function. See **[nlp/CONTRACT.md](nlp/CONTRACT.md)**.
+- **NLP** (`nlp/`): an LLM evaluator behind one function. See **[nlp/GUIDE.md](nlp/GUIDE.md)** (walkthrough) and **[nlp/CONTRACT.md](nlp/CONTRACT.md)** (spec).
 - **UI** (`frontend/`): plain HTML, CSS and JavaScript, served at `/ui/`.
 
 ## Run

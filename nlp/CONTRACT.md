@@ -1,5 +1,7 @@
 # NLP ⇄ Service contract
 
+> New here? Start with **[GUIDE.md](GUIDE.md)**: how the site calls your code, real input/output examples in `examples/`, and how to test.
+
 The service handles everything except judging the conversation: storage, the API, the UI, appeals, scoring math, and the `results.json` export.
 **The NLP part has one job:** read one conversation and the checklist, then return a raw value, a rationale and evidence turns for every criterion.
 
@@ -102,4 +104,6 @@ If you return a missing or duplicate criterion, an unknown id, a value outside `
 ```bash
 python -m nlp.check                   # runs your evaluate() on 5 DEV conversations and validates the output
 python -m nlp.check p1-ru-001 p4-ru-002
+python -m nlp.check --checklist compliance   # second checklist: different ids and scale
+python -m nlp.check --all                     # all 65 DEV conversations
 ```

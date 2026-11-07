@@ -1,0 +1,14 @@
+{
+  "criteria": [
+    {"criterion_id": "contact", "value": true, "rationale": "Контакт — Да. Оператор поздоровался и представился в первом ответе.", "evidence_turns": [10], "checked_turns": [10, 10], "na_reason": null},
+    {"criterion_id": "discovery", "value": null, "rationale": "Выявление потребности — N/A. Клиент сразу описал вопрос и что он с ноутбука, уточнять было нечего.", "evidence_turns": [1, 5], "checked_turns": [1, 10], "na_reason": "Данных для ответа хватало с самого начала."},
+    {"criterion_id": "identification", "value": null, "rationale": "Идентификация — N/A. Оператор не раскрывал данных счёта, подсказал только где найти тариф.", "evidence_turns": [10], "checked_turns": [10, 12], "na_reason": "Запрос не требовал идентификации (например, общий вопрос о тарифах)."},
+    {"criterion_id": "consultation", "value": 20, "rationale": "Консультация — 20. Дан точный путь для веб-версии, клиент подтвердил, что нашёл.", "evidence_turns": [10, 11], "checked_turns": [10, 11], "na_reason": null},
+    {"criterion_id": "empathy", "value": true, "rationale": "Вежливость — Да. Тон доброжелательный, учтено, что клиент с ноутбука.", "evidence_turns": [10, 12], "checked_turns": [10, 12], "na_reason": null},
+    {"criterion_id": "dialogue", "value": 10, "rationale": "Ведение диалога — 10. Ответ ясный, без лишних переспрашиваний.", "evidence_turns": [10], "checked_turns": [10, 12], "na_reason": null},
+    {"criterion_id": "closure", "value": true, "rationale": "Завершение — Да. Оператор попрощался после подтверждения клиента.", "evidence_turns": [12], "checked_turns": [11, 12], "na_reason": null},
+    {"criterion_id": "critical", "value": false, "rationale": "Грубых нарушений нет.", "evidence_turns": [10, 12], "checked_turns": [10, 12], "na_reason": null}
+  ],
+  "model": {"mode": "external_api", "name": "claude-sonnet-5-5"},
+  "usage": {"input_tokens": 3400, "output_tokens": 650}
+}
