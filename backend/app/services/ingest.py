@@ -5,7 +5,7 @@ import copy
 import json
 import re
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit, urlunsplit
 
 import httpx
 from sqlalchemy.orm import Session
@@ -33,11 +33,19 @@ def guess_operator(transcript: list[dict]) -> str | None:
     return None
 
 
+def with_group_id(base_url: str, group_id: str) -> str:
+    """Set group_id on the organizer URL, replacing one already present (the API rejects duplicates).
+    Other query params (incl. the URL-encoded `sp`) are kept byte-for-byte."""
+    parts = urlsplit(base_url)
+    kept = [p for p in parts.query.split("&") if p and not p.split("=", 1)[0] == "group_id"]
+    kept.append(urlencode({"group_id": group_id}))
+    return urlunsplit(parts._replace(query="&".join(kept)))
+
+
 def fetch_group(group_id: str, save: bool = True) -> dict:
     if not ORG_API_URL:
         raise RuntimeError("ORG_API_URL is not configured (.env)")
-    sep = "&" if "?" in ORG_API_URL else "?"
-    url = f"{ORG_API_URL}{sep}{urlencode({'group_id': group_id})}"
+    url = with_group_id(ORG_API_URL, group_id)
     r = httpx.get(url, timeout=60)
     r.raise_for_status()
     payload = r.json()

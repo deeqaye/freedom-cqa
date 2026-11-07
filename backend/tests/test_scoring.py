@@ -95,3 +95,10 @@ def test_validate_missing_and_duplicate():
         validate_results(CRITERIA, res[:-1])
     with pytest.raises(ValidationError, match="duplicate"):
         validate_results(CRITERIA, res + [res[0]])
+
+
+def test_org_url_group_id_replaced_not_duplicated():
+    from app.services.ingest import with_group_id
+    base = "https://x.example/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sig=abc"
+    assert with_group_id(base, "DEV") == base + "&group_id=DEV"
+    assert with_group_id(base + "&group_id=DEV", "PROD") == base + "&group_id=PROD"
