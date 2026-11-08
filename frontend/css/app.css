@@ -216,6 +216,14 @@ table.tbl { width: 100%; border-collapse: collapse; }
 .tbl th.sorted .sort-ind { opacity: 1; }
 
 /* selected-rows summary next to the overall counts on Диалоги */
+/* "Оценить выбранные (N)" changes width with N: fixed width keeps the toolbar from re-wrapping */
+[data-eval-sel] { min-width: 236px; }
+/* title block takes the free space and wraps inside it, instead of growing and pushing the header buttons
+   onto a new line (which moved the table down on the first selection) */
+.page-head > div:first-child { flex: 1 1 320px; min-width: 0; }
+/* reserve the line the selection summary may wrap onto, so selecting never pushes the table down
+   (a moving table under a held mouse button would select the wrong rows) */
+.sub[data-count] { min-height: calc(2 * 1.45em); }
 .sel-summary { margin-left: 28px; padding-left: 12px; border-left: 2px solid var(--brand); color: var(--brand-strong); }
 @media (max-width: 720px) { .sel-summary { display: block; margin: 4px 0 0; } }
 

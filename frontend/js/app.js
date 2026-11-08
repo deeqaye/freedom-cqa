@@ -14,6 +14,7 @@ const routes = [
 
 const view = document.getElementById("view");
 let current = null;
+let navSeq = 0;  // bumps on every navigation; a page that finishes loading after the user moved on is discarded
 
 async function render() {
   const hash = location.hash || "#/conversations";
@@ -22,13 +23,23 @@ async function render() {
   const [re, nav, load, params] = route;
   document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("active", a.dataset.nav === nav));
   if (current && current.unmount) current.unmount();
-  view.innerHTML = `<div class="empty">Загрузка…</div>`;
+  current = null;
+  // Each page mounts into its own container: a slow page (e.g. a card still fetching) that resolves after the
+  // user navigated elsewhere writes into a detached box instead of painting over the new page.
+  const seq = ++navSeq;
+  const box = document.createElement("div");
+  box.innerHTML = `<div class="empty">Загрузка…</div>`;
+  view.replaceChildren(box);
   try {
     const mod = await load();
-    current = (await mod.mount(view, params ? params(hash.match(re)) : {})) || null;
+    const mounted = (await mod.mount(box, params ? params(hash.match(re)) : {})) || null;
+    if (seq !== navSeq) { mounted && mounted.unmount && mounted.unmount(); return; }  // superseded
+    current = mounted;
   } catch (e) {
     console.error(e);
-    view.innerHTML = `<div class="card"><h2>Ошибка</h2><p>${e.message}</p></div>`;
+    if (seq !== navSeq) return;
+    box.innerHTML = `<div class="card"><h2>Ошибка</h2><p></p></div>`;
+    box.querySelector("p").textContent = e.message;
   }
   view.focus({ preventScroll: true });
   refreshBadge();

@@ -160,7 +160,7 @@ export async function mount(el) {
   // ---- selection: checkbox, Shift+click (range from the last clicked row), Ctrl/⌘+click (toggle a row),
   // press and drag across rows. Mouse only; touch and keyboard keep the plain checkbox.
   let anchor = null;          // last clicked row: start of a Shift range
-  let drag = null;            // { start, on, base: Set, moved }
+  let drag = null;            // { start, on, base: Set, moved, x, y }
   let suppressClick = false;  // the click that ends a selection gesture must not open the card
   let lastWasTouch = false;
   const table = tbody.closest("table");
@@ -195,18 +195,25 @@ export async function mount(el) {
       suppressClick = true;
       syncSel();
     }
-    drag = { start: id, on, base, moved: false };  // becomes a drag-select once the pointer reaches another row
+    // becomes a drag-select once the pointer itself moves onto another row
+    drag = { start: id, on, base, moved: false, x: e.clientX, y: e.clientY };
   });
-  tbody.addEventListener("pointerover", e => {
+  // Tracked on the window with a hit-test, not "pointerover": after a press on a checkbox Chrome stops
+  // sending pointerover to other rows, and the pointer may leave the table while dragging.
+  const onDragMove = e => {
     if (!drag) return;
-    const tr = e.target.closest("tr[data-id]");
+    const hit = document.elementFromPoint(e.clientX, e.clientY);
+    const tr = hit && tbody.contains(hit) ? hit.closest("tr[data-id]") : null;
     if (!tr || (!drag.moved && tr.dataset.id === drag.start)) return;
+    // Ignore "pointer over another row" caused by the table moving under a still pointer (e.g. the
+    // "Выбрано: …" line appearing above it on the first selection): only a real mouse move starts a drag.
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 5) return;
     drag.moved = true;
     table.classList.add("dragging");
     applyRange(drag.start, tr.dataset.id, drag.on, drag.base);
     anchor = drag.start;
     syncSel();
-  });
+  };
   const endDrag = () => {
     if (!drag) return;
     if (drag.moved) suppressClick = true;
@@ -219,6 +226,7 @@ export async function mount(el) {
     selected.clear();
     syncSel();
   };
+  addEventListener("pointermove", onDragMove);
   addEventListener("pointerup", endDrag);
   addEventListener("pointercancel", endDrag);
   addEventListener("keydown", onKey);
@@ -283,7 +291,7 @@ export async function mount(el) {
   });
 
   await load();
-  return { unmount() { removeEventListener("pointerup", endDrag); removeEventListener("pointercancel", endDrag); removeEventListener("keydown", onKey); } };
+  return { unmount() { removeEventListener("pointermove", onDragMove); removeEventListener("pointerup", endDrag); removeEventListener("pointercancel", endDrag); removeEventListener("keydown", onKey); } };
 }
 
 /** Dataset loader: by group_id (server's ORG_API_URL), by full GET link, or by JSON file. */
