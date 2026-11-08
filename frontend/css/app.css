@@ -218,3 +218,30 @@ table.tbl { width: 100%; border-collapse: collapse; }
 /* selected-rows summary next to the overall counts on Диалоги */
 .sel-summary { margin-left: 28px; padding-left: 12px; border-left: 2px solid var(--brand); color: var(--brand-strong); }
 @media (max-width: 720px) { .sel-summary { display: block; margin: 4px 0 0; } }
+
+/* hidden attribute must win over display:grid/flex classes */
+[hidden] { display: none !important; }
+
+/* Апелляции → История */
+.hist-wrap { overflow: auto; }
+.hist-wrap .tbl td { vertical-align: top; }
+.chip.dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Диалоги: multi-select (Shift range, Ctrl/⌘ toggle, drag across rows) */
+.tbl td.check { cursor: pointer; user-select: none; }
+.tbl tr.picked td { background: var(--brand-soft); }
+.tbl tr.picked td:first-child { box-shadow: inset 3px 0 0 var(--brand); }
+.tbl.dragging, .tbl.dragging * { user-select: none; cursor: default; }
+.tbl.dragging tr.click:hover td { background: inherit; }
+.tbl.dragging tr.picked td { background: var(--brand-soft); }
+.sel-hint { margin-top: -6px; }
+kbd { font: 600 11px/1 ui-monospace, "SF Mono", Menlo, monospace; padding: 2px 5px; border: 1px solid #cfd8d2; border-bottom-width: 2px; border-radius: 5px; background: #fff; color: var(--text-2); }
+.linkish { all: unset; cursor: pointer; margin-left: 8px; color: var(--muted); text-decoration: underline; text-underline-offset: 2px; font-size: 12px; }
+.linkish:hover { color: var(--bad); }
+.linkish:focus-visible { outline: 2px solid var(--brand); border-radius: 4px; }
+@media (max-width: 720px), (pointer: coarse) { .sel-hint { display: none; } }
+
+/* Чек-листы: new checklist dialog */
+div.f.radios { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-2); }
+div.f.radios label { color: var(--text); cursor: pointer; display: flex; gap: 8px; align-items: center; }
+input[type=radio], input[type=checkbox] { accent-color: var(--brand); }

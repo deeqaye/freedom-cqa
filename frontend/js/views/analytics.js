@@ -80,19 +80,37 @@ export async function mount(el) {
             ${Object.entries(d.by_language).map(([l, v]) => `<tr><td>${esc(l)}</td><td class="num">${fmtNum(v)}</td></tr>`).join("")}</tbody></table>
             <h3 style="margin-top:14px">Апелляции</h3><p>Открыто: <b>${d.appeals.open}</b> · принято: <b>${d.appeals.accepted}</b> · отклонено: <b>${d.appeals.rejected}</b></p></div>
         </div>`}
-      ${!operator && isAdmin ? compareCard(await api.get("/api/stats/compare").catch(() => null)) : ""}
+      ${!operator && isAdmin ? `<div data-compare>${await compareHtml()}</div>` : ""}
       ${!operator && isAdmin ? costCard(await api.get("/api/stats/cost").catch(() => null)) : ""}`;
   }
 
   /** The same conversations scored under each checklist version. */
-  function compareCard(d) {
-    if (!d || d.columns.length < 2) return `<div class="card"><h2>Сравнение чек-листов</h2><div class="empty">Оцените один набор по двум чек-листам
+  // Checklists to compare (A vs B). With 3+ checklists, "shared" must mean "scored under both chosen ones".
+  let cmpPair = null;
+  async function compareHtml() {
+    const all = await api.get("/api/stats/compare").catch(() => null);
+    if (!all || all.columns.length <= 2) return compareCard(all, null);
+    const avail = all.columns.map(c => ({ id: c.checklist_id, name: c.checklist_name, count: c.count }));
+    if (!cmpPair || !cmpPair.every(id => avail.some(a => a.id === id))) {
+      const a = avail.find(x => x.id === "chat-quality") || avail[0];
+      const b = avail.filter(x => x.id !== a.id).sort((x, y) => y.count - x.count)[0];
+      cmpPair = [a.id, b.id];
+    }
+    const d = await api.get(`/api/stats/compare?checklist_ids=${cmpPair.map(encodeURIComponent).join(",")}`).catch(() => null);
+    const pick = (i, other) => `<select data-cmp-pick="${i}" aria-label="Чек-лист ${i ? "B" : "A"}">${avail.filter(x => x.id !== other)
+      .map(x => `<option value="${esc(x.id)}" ${x.id === cmpPair[i] ? "selected" : ""}>${esc(x.name)} (${x.count})</option>`).join("")}</select>`;
+    return compareCard(d, `${pick(0, cmpPair[1])}<span class="muted">vs</span>${pick(1, cmpPair[0])}`);
+  }
+
+  function compareCard(d, picker) {
+    const title = `<div class="row" style="margin-bottom:12px"><h2 style="margin:0">Сравнение чек-листов</h2><span class="spacer"></span>${picker || ""}</div>`;
+    if (!d || d.columns.length < 2) return `<div class="card">${title}<div class="empty">Оцените один набор по двум чек-листам
       (переключатель на странице «Чек-листы» или в карточке диалога), чтобы сравнить результаты.</div></div>`;
     const cols = d.columns, shared = d.rows.filter(r => Object.keys(r.critical).length === cols.length);
     const head = cols.map(c => `<th class="num">${esc(c.checklist_name)} <span class="muted">v${c.version}</span></th>`).join("");
     const delta = r => { const v = cols.map(c => r.scores[c.version_id]); return v.every(x => x != null) ? Math.max(...v) - Math.min(...v) : -1; };
     const top = shared.slice().sort((a, b) => delta(b) - delta(a)).slice(0, 10);
-    return `<div class="card"><h2>Сравнение чек-листов</h2>
+    return `<div class="card">${title}
       <table class="tbl"><thead><tr><th></th>${head}</tr></thead><tbody>
         <tr><td>Оценено диалогов</td>${cols.map(c => `<td class="num">${c.count}</td>`).join("")}</tr>
         <tr><td>Средний балл (все оценённые)</td>${cols.map(c => `<td class="num">${fmtNum(c.avg_score)}</td>`).join("")}</tr>
@@ -133,6 +151,12 @@ export async function mount(el) {
   const clSel = el.querySelector("[data-cl]");
   if (clSel) clSel.onchange = async () => { clId = clSel.value; await loadTitles(); draw(); };
   el.querySelector("[data-op]").onchange = e => { operator = e.target.value; draw(); };
+  body.addEventListener("change", async e => {
+    const p = e.target.closest("[data-cmp-pick]");
+    if (!p) return;
+    cmpPair[+p.dataset.cmpPick] = p.value;
+    body.querySelector("[data-compare]").innerHTML = await compareHtml();
+  });
   body.addEventListener("click", e => {
     const o = e.target.closest("[data-o]");
     if (o) { operator = o.dataset.o; el.querySelector("[data-op]").value = operator; draw(); }
