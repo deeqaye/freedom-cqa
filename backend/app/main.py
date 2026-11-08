@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import seed
@@ -36,7 +37,10 @@ async def no_stale_ui(request, call_next):
     """UI files are ES modules that import each other: after a deploy a browser must not mix cached old files with
     new ones (a missing export blanks the page). no-cache = always revalidate (ETag -> cheap 304 if unchanged)."""
     resp = await call_next(request)
-    if request.url.path.startswith("/ui"):
+    path = request.url.path
+    if path.startswith("/ui/v/"):     # content-addressed (see ASSET_V): safe to cache forever
+        resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif path.startswith("/ui"):
         resp.headers["Cache-Control"] = "no-cache"
     return resp
 
@@ -55,7 +59,29 @@ def health():
     return {"ok": True, "evaluator": get_evaluator()[1]}
 
 
+def _asset_version() -> str:
+    """Hash of every frontend file: changes on each deploy that touches the UI."""
+    h = hashlib.sha1()
+    for p in sorted(FRONTEND_DIR.rglob("*")):
+        if p.is_file():
+            h.update(str(p.relative_to(FRONTEND_DIR)).encode())
+            h.update(p.read_bytes())
+    return h.hexdigest()[:12]
+
+
 if FRONTEND_DIR.exists() and any(FRONTEND_DIR.iterdir()):
+    # Cache busting: index.html points CSS/JS at /ui/v/<hash>/..., and ES modules import each other by relative
+    # path, so after a deploy the browser fetches a whole new, consistent set instead of mixing cached old files.
+    ASSET_V = _asset_version()
+
+    @app.get("/ui/", include_in_schema=False)
+    @app.get("/ui/index.html", include_in_schema=False)
+    def ui_index():
+        html = (FRONTEND_DIR / "index.html").read_text(encoding="utf-8")
+        html = html.replace('href="css/', f'href="v/{ASSET_V}/css/').replace('src="js/', f'src="v/{ASSET_V}/js/')
+        return HTMLResponse(html)
+
+    app.mount(f"/ui/v/{ASSET_V}", StaticFiles(directory=FRONTEND_DIR), name="ui-versioned")
     app.mount("/ui", StaticFiles(directory=FRONTEND_DIR, html=True), name="ui")
 
 

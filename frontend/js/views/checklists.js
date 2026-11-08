@@ -10,6 +10,31 @@ const TR = { а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: 
 const slug = t => [...t.toLowerCase()].map(ch => TR[ch] ?? ch).join("").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
 const TEMPLATE = () => [{ id: "criterion_1", section: "Основное", title: "Новый критерий", type: "binary", weight: 100, na_allowed: false,
   description: "Да — опишите, когда критерий выполнен.", na_condition: null, prompt_hint: "" }];
+/** Checklist JSON from a file: {id?, name?, criteria:[...]} (seed format), {version:{criteria}} (API format)
+ *  or a bare array of criteria. Missing optional fields get defaults; the server validates the rest. */
+function parseChecklistFile(text) {
+  let d;
+  try { d = JSON.parse(text); } catch { throw new Error("Файл не является корректным JSON"); }
+  const criteria = Array.isArray(d) ? d : d.criteria || (d.version && d.version.criteria);
+  if (!Array.isArray(criteria) || !criteria.length) throw new Error("В файле нет списка критериев (ожидается criteria: [...])");
+  const bad = criteria.findIndex(c => !c || typeof c !== "object" || !c.id || !c.title || !["binary", "scale", "flag"].includes(c.type));
+  if (bad >= 0) throw new Error(`Критерий №${bad + 1}: нужны id, title и type (binary / scale / flag)`);
+  return {
+    id: Array.isArray(d) ? "" : d.id || "", name: Array.isArray(d) ? "" : d.name || "",
+    criteria: criteria.map(c => ({ section: "", description: "", na_allowed: false, na_condition: null, prompt_hint: "", ...c,
+      weight: c.type === "flag" ? 0 : +(c.weight ?? 0), prompt_hint: c.prompt_hint ?? "" })),
+  };
+}
+/** Criterion id from its title: "Вежливость оператора" -> "vezhlivost_operatora" (pattern ^[a-z][a-z0-9_]{1,63}$). */
+const critId = t => {
+  let id = slug(t).replace(/-/g, "_").slice(0, 60);
+  if (!/^[a-z]/.test(id)) id = "c_" + id;
+  return id.length >= 2 ? id : "";
+};
+const CRIT_ID_RE = /^[a-z][a-z0-9_]{1,63}$/;
+const FIELD_RU = { id: "ID", title: "название", weight: "вес", steps: "ступени шкалы", type: "тип", description: "описание" };
+const readFile = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsText(f, "utf-8"); });
+
 const blank = () => ({ id: "", section: "", title: "", type: "binary", weight: 10, na_allowed: false, description: "", na_condition: "", prompt_hint: "", _new: true });
 
 export async function mount(el) {
@@ -26,7 +51,9 @@ export async function mount(el) {
     <div class="stack">
       <div class="card row" data-bar>
         <span class="weights" data-w></span><span class="spacer"></span>
-        ${canEdit ? `<button class="btn ghost" data-add>+ Критерий</button><input data-note placeholder="Комментарий к версии" style="width:220px"><button class="btn" data-save>Сохранить новую версию</button>` : ""}
+        <button class="btn ghost" data-download title="Скачать текущую версию как JSON (этот же формат принимает импорт)">Скачать JSON</button>
+        ${canEdit ? `<button class="btn ghost" data-import title="Добавить критерии из JSON-файла">⤓ Из файла</button><input type="file" accept=".json,application/json" data-import-file hidden>
+          <button class="btn ghost" data-add>+ Критерий</button><input data-note placeholder="Комментарий к версии" style="width:220px"><button class="btn" data-save>Сохранить новую версию</button>` : ""}
       </div>
       <div class="stack" data-crits></div>
       <div class="card stack">
@@ -86,6 +113,15 @@ export async function mount(el) {
     else if (k === "steps") c.steps = e.target.value.split(/[,\s]+/).filter(Boolean).map(Number);
     else if (k === "step_labels") c.step_labels = Object.fromEntries(e.target.value.split("\n").map(l => l.match(/^\s*(\d+)\s*:\s*(.+)$/)).filter(Boolean).map(m => [m[1], m[2]]));
     else c[k] = e.target.value;
+    if (k === "id") c._idTouched = true;
+    if (k === "title" && c._new && !c._idTouched) {  // new criterion: id follows the title until edited by hand
+      const base = critId(c.title);
+      let id = base, n = 2;
+      while (base && crit.some(o => o !== c && o.id === id)) id = `${base}_${n++}`;
+      c.id = id;
+      box.querySelector('[data-k="id"]').value = id;
+    }
+    box.classList.remove("invalid");
     dirty = true;
     if (k === "type") {
       if (c.type === "scale" && !c.steps) c.steps = [0, 5, 10];
@@ -105,7 +141,60 @@ export async function mount(el) {
     crit.push(blank()); dirty = true; draw();
     critsEl.lastElementChild.previousElementSibling?.scrollIntoView({ behavior: "smooth", block: "center" });
   });
+  // Import criteria from a JSON file into the editor (appended; ids already present are skipped). Saved as a new version.
+  const importInput = el.querySelector("[data-import-file]");
+  el.querySelector("[data-import]")?.addEventListener("click", () => { importInput.value = ""; importInput.click(); });
+  importInput?.addEventListener("change", async () => {
+    const f = importInput.files[0];
+    if (!f) return;
+    try {
+      const { criteria } = parseChecklistFile(await readFile(f));
+      const have = new Set(crit.map(c => c.id));
+      const add = criteria.filter(c => !have.has(c.id));
+      add.forEach(c => crit.push({ ...c, _new: true, _idTouched: true }));  // ids from the file stay as they are
+      dirty = dirty || add.length > 0;
+      draw();
+      const skipped = criteria.length - add.length;
+      toast(add.length ? `Добавлено критериев: ${add.length}${skipped ? `, пропущено (такой id уже есть): ${skipped}` : ""}. Нажмите «Сохранить новую версию».`
+        : "Все критерии из файла уже есть в чек-листе", !add.length);
+      if (add.length) critsEl.querySelector(".cl-crit.new")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    } catch (err) { toast(err.message, true); }
+  });
+  el.querySelector("[data-download]").addEventListener("click", () => {
+    const cur = list.find(c => c.id === clId);
+    const doc = { id: clId, name: cur?.name || clId, version: data?.version.version, criteria: cleanCriteria() };
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" }));
+    a.download = `${clId}-v${data?.version.version ?? ""}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+  /** Problems the server would reject, in Russian, with the criterion they belong to. */
+  function problems() {
+    const out = [], seen = new Map();
+    crit.forEach((c, i) => {
+      const name = `Критерий №${i + 1}${c.title ? ` «${c.title}»` : ""}`;
+      if (!c.title || !c.title.trim()) out.push([i, `${name}: укажите название`]);
+      if (!CRIT_ID_RE.test(c.id || "")) out.push([i, `${name}: ID — от 2 символов, строчная латиница, цифры и «_», начинается с буквы (сейчас: «${c.id || ""}»)`]);
+      else if (seen.has(c.id)) out.push([i, `${name}: ID «${c.id}» уже используется в критерии №${seen.get(c.id) + 1}`]);
+      seen.set(c.id, seen.has(c.id) ? seen.get(c.id) : i);
+      if (c.type !== "flag" && !(+c.weight >= 0)) out.push([i, `${name}: вес должен быть числом ≥ 0`]);
+      if (c.type === "scale" && (!Array.isArray(c.steps) || c.steps.length < 2 || c.steps.some(x => !Number.isInteger(x)))) out.push([i, `${name}: ступени шкалы — минимум две целых, через запятую (например 0, 5, 10)`]);
+    });
+    if (!crit.some(c => c.type !== "flag" && +c.weight > 0)) out.push([0, "Нужен хотя бы один критерий с весом больше 0"]);
+    return out;
+  }
+  /** Server validation error "criteria.8.id: ..." -> "Критерий №9 «…» (ID): ..." */
+  const explain = msg => msg.replace(/criteria\.(\d+)\.(\w+): /g, (_, i, f) => `Критерий №${+i + 1}${crit[+i]?.title ? ` «${crit[+i].title}»` : ""} (${FIELD_RU[f] || f}): `);
+  function markInvalid(list) {
+    critsEl.querySelectorAll(".cl-crit.invalid").forEach(n => n.classList.remove("invalid"));
+    list.forEach(([i]) => critsEl.querySelector(`[data-i="${i}"]`)?.classList.add("invalid"));
+    critsEl.querySelector(".cl-crit.invalid")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
   el.querySelector("[data-save]")?.addEventListener("click", async e => {
+    const bad = problems();
+    if (bad.length) { markInvalid(bad); return toast(bad.map(b => b[1]).join("\n"), true); }
     const criteria = cleanCriteria();
     e.target.disabled = true;
     try {
@@ -115,11 +204,15 @@ export async function mount(el) {
       list = await api.get("/api/checklists");
       drawChecklistSelect();
       await load();
-    } catch (err) { toast(err.message, true); } finally { e.target.disabled = false; }
+    } catch (err) {
+      const m = /criteria\.(\d+)\./.exec(err.message);
+      if (m) markInvalid([[+m[1]]]);
+      toast(explain(err.message), true);
+    } finally { e.target.disabled = false; }
   });
   /** Editor state -> API criteria. */
   function cleanCriteria() {
-    return crit.map(({ _new, ...c }) => {
+    return crit.map(({ _new, _idTouched, ...c }) => {
       const out = { ...c, weight: c.type === "flag" ? 0 : +c.weight };
       if (out.type !== "scale") { delete out.steps; delete out.step_labels; }
       if (!out.na_allowed) out.na_condition = null;
@@ -144,6 +237,11 @@ export async function mount(el) {
       <div class="f radios">Основа
         <label><input type="radio" name="base" value="copy" checked> Копия текущего: <b>${esc(cur?.name || "")}</b> (v${data?.version.version ?? ""}, ${crit.length} критериев${dirty ? ", с несохранёнными правками" : ""})</label>
         <label><input type="radio" name="base" value="empty"> Пустой — один критерий-шаблон</label>
+        <label><input type="radio" name="base" value="file"> Из файла JSON</label>
+      </div>
+      <div data-file-box hidden>
+        <input type="file" accept=".json,application/json" data-file>
+        <div class="small muted" data-file-info>Формат как у «Скачать JSON» или seed/checklist_*.json: {"name", "id", "criteria": [...]}</div>
       </div>
       <label class="f">Комментарий к версии (необязательно)<input data-note-new autocomplete="off"></label>
       <div class="small" data-err style="color:var(--bad)"></div>
@@ -154,16 +252,36 @@ export async function mount(el) {
       $("[data-name]").focus();
       $("[data-name]").oninput = () => { if (!idTouched) $("[data-id]").value = slug($("[data-name]").value); };
       $("[data-id]").oninput = () => { idTouched = true; };
+      let fromFile = null;
+      m.querySelectorAll("input[name=base]").forEach(r => r.onchange = () => { $("[data-file-box]").hidden = r.value !== "file" || !r.checked; });
+      $("[data-file]").onchange = async () => {
+        fromFile = null;
+        $("[data-err]").textContent = "";
+        const f = $("[data-file]").files[0];
+        if (!f) return;
+        try {
+          fromFile = parseChecklistFile(await readFile(f));
+          $("[data-file-info]").textContent = `${f.name}: ${fromFile.criteria.length} критериев`;
+          if (!$("[data-name]").value.trim() && fromFile.name) $("[data-name]").value = fromFile.name;
+          if (!$("[data-id]").value.trim()) {
+            const id = fromFile.id && !list.some(c => c.id === fromFile.id) ? fromFile.id : slug($("[data-name]").value || f.name.replace(/\.json$/i, ""));
+            $("[data-id]").value = id;
+          }
+        } catch (err) { $("[data-err]").textContent = err.message; $("[data-file-info]").textContent = f.name; }
+      };
       $("[data-go]").onclick = async e => {
         const name = $("[data-name]").value.trim(), id = $("[data-id]").value.trim();
         if (name.length < 2) return ($("[data-err]").textContent = "Укажите название");
         if (!/^[a-z0-9][a-z0-9-]{1,63}$/.test(id)) return ($("[data-err]").textContent = "ID: от 2 символов, строчная латиница, цифры и дефис");
         if (list.some(c => c.id === id)) return ($("[data-err]").textContent = `Чек-лист с ID «${id}» уже есть`);
-        const copy = m.querySelector("input[name=base]:checked").value === "copy";
+        const base = m.querySelector("input[name=base]:checked").value;
+        if (base === "file" && !fromFile) return ($("[data-err]").textContent = "Выберите JSON-файл с критериями");
+        const criteria = base === "copy" ? cleanCriteria() : base === "file" ? fromFile.criteria : TEMPLATE();
+        const note = $("[data-note-new]").value.trim()
+          || (base === "copy" ? `Копия ${cur?.name} v${data?.version.version}` : base === "file" ? `Импорт из файла ${$("[data-file]").files[0].name}` : "Создан с нуля");
         e.target.disabled = true;
         try {
-          await api.post("/api/checklists", { id, name, criteria: copy ? cleanCriteria() : TEMPLATE(),
-            note: $("[data-note-new]").value.trim() || (copy ? `Копия ${cur?.name} v${data?.version.version}` : "Создан с нуля") });
+          await api.post("/api/checklists", { id, name, criteria, note });
           close();
           dirty = false;
           list = await api.get("/api/checklists");

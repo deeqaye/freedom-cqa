@@ -253,3 +253,7 @@ kbd { font: 600 11px/1 ui-monospace, "SF Mono", Menlo, monospace; padding: 2px 5
 div.f.radios { display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: var(--text-2); }
 div.f.radios label { color: var(--text); cursor: pointer; display: flex; gap: 8px; align-items: center; }
 input[type=radio], input[type=checkbox] { accent-color: var(--brand); }
+
+/* Чек-листы: criterion that failed validation */
+.cl-crit.invalid { border-color: var(--bad); box-shadow: 0 0 0 2px var(--bad-soft); }
+.toast { white-space: pre-line; }
