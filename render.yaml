@@ -15,7 +15,7 @@ services:
       - key: ORG_API_URL          # organizers' GET url without &group_id=... (secret, set in dashboard)
         sync: false
       - key: TEAM_NAME
-        value: Freedom HT
+        value: ABILITY DRAFT ENJOYERS
       - key: EVAL_WORKERS
         value: "4"
 databases:

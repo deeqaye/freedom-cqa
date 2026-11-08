@@ -28,6 +28,6 @@ if DATABASE_URL.startswith("postgres://"):
 elif DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = "postgresql+psycopg://" + DATABASE_URL[len("postgresql://"):]
 EVAL_WORKERS = int(os.getenv("EVAL_WORKERS", "4"))
-TEAM_NAME = os.getenv("TEAM_NAME", "Freedom HT")
+TEAM_NAME = os.getenv("TEAM_NAME", "ABILITY DRAFT ENJOYERS")
 SEED_ON_START = os.getenv("SEED_ON_START", "1") == "1"
 SEED_RESULTS = os.getenv("SEED_RESULTS", "1") == "1"  # import committed results/*/results.json on a fresh DB
