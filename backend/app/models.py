@@ -93,6 +93,26 @@ class Appeal(Base):
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class AppealEvent(Base):
+    """Stored appeal history: one row per action (filed / accepted / rejected). Append-only log that keeps a
+    snapshot of what happened (titles, values, scores), so it reads correctly even after data changes.
+    No FK on purpose: clearing the log never touches appeals, and the log never blocks deleting them."""
+    __tablename__ = "appeal_events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    appeal_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
+    action: Mapped[str] = mapped_column(String(16))  # created | accepted | rejected
+    role: Mapped[str] = mapped_column(String(64))
+    conversation_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    criterion_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    criterion_title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    old_value: Mapped[object] = mapped_column(JSON, nullable=True)
+    new_value: Mapped[object] = mapped_column(JSON, nullable=True)
+    comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    score_before: Mapped[float | None] = mapped_column(Float, nullable=True)
+    score_after: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
+
+
 class Meta(Base):
     """Small key/value store for app state (e.g. whether first-start seeding already happened)."""
     __tablename__ = "meta"

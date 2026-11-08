@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from .. import seed
 from ..db import get_db
-from ..models import Appeal, Checklist, ChecklistVersion, Conversation, Evaluation
+from ..models import Appeal, AppealEvent, Checklist, ChecklistVersion, Conversation, Evaluation
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -42,6 +42,7 @@ def reset(body: ResetIn, _: str = Depends(require_admin), db: Session = Depends(
     if body.confirm != "DELETE":
         raise HTTPException(400, 'confirm must be "DELETE"')
     before = counts(db)
+    db.execute(delete(AppealEvent))     # history log goes with the data it describes
     db.execute(delete(Appeal))          # FK order: appeals -> evaluations -> conversations
     db.execute(delete(Evaluation))
     db.execute(delete(Conversation))

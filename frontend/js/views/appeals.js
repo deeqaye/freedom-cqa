@@ -1,18 +1,88 @@
 import { api, getRole } from "../api.js";
 import { icon } from "../icons.js";
-import { SPEAKER, esc, fmtNum, fmtTs, fmtValue, optionsHtml, toast, valueOptions } from "../ui.js";
+import { SPEAKER, esc, fmtNum, fmtTs, fmtValue, modal, optionsHtml, skeleton, toast, valueOptions } from "../ui.js";
 
 const ST = { open: ["warn", "На рассмотрении"], accepted: ["good", "Принята"], rejected: ["na", "Отклонена"] };
+const EVENT = { created: ["warn", "Подана"], accepted: ["good", "Принята"], rejected: ["na", "Отклонена"] };
+const ROLE = { operator: "Оператор", lead: "Главный специалист", admin: "Администратор" };
+const fmtDate = d => new Date(d).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 export async function mount(el, { id }) {
   let filter = "open", list = [];
   el.innerHTML = `
     <div class="page-head"><div><h1>Апелляции</h1><div class="sub">Оспоренные оценки и решения проверяющего</div></div>
       <div class="seg" data-filter>
-        <button data-s="open">Открытые</button><button data-s="accepted">Принятые</button><button data-s="rejected">Отклонённые</button><button data-s="">Все</button>
+        <button data-s="open">Открытые</button><button data-s="accepted">Принятые</button><button data-s="rejected">Отклонённые</button><button data-s="">Все</button><button data-s="history">${icon("clock", 15)} История</button>
       </div></div>
-    <div class="split"><div class="card" data-list></div><div class="card" data-detail><div class="empty-state">${icon("scale", 32)}<p>Выберите апелляцию слева, чтобы увидеть фрагмент и принять решение.</p></div></div></div>`;
+    <div class="card" data-history hidden></div>
+    <div class="split" data-split><div class="card" data-list></div><div class="card" data-detail><div class="empty-state">${icon("scale", 32)}<p>Выберите апелляцию слева, чтобы увидеть фрагмент и принять решение.</p></div></div></div>`;
   const listEl = el.querySelector("[data-list]"), detEl = el.querySelector("[data-detail]");
+  const histEl = el.querySelector("[data-history]"), splitEl = el.querySelector("[data-split]");
+
+  /** Stored log of every filed / accepted / rejected appeal (kept in the DB, survives restarts). */
+  async function loadHistory() {
+    histEl.innerHTML = skeleton("table", 6);
+    const h = await api.get("/api/appeals/history");
+    const canClear = ["admin", "lead"].includes(getRole());
+    const change = e => {
+      if (e.action === "created") return e.new_value != null ? `${esc(fmtValue(e.old_value))} → предлагает <b>${esc(fmtValue(e.new_value))}</b>` : `оспорено: ${esc(fmtValue(e.old_value))}`;
+      if (e.action === "accepted") return `${esc(fmtValue(e.old_value))} → <b>${esc(fmtValue(e.new_value))}</b>`;
+      return `<span class="muted">без изменений</span>`;
+    };
+    const score = e => (e.score_before == null || e.score_before === e.score_after ? "" :
+      `${fmtNum(e.score_before)} → <b>${fmtNum(e.score_after)}</b>`);
+    histEl.innerHTML = `
+      <div class="card-head"><h2>История апелляций</h2>
+        <span class="muted small">${h.total} ${h.total === 1 ? "событие" : "событий"}${h.total > h.events.length ? ` · показаны последние ${h.events.length}` : ""}</span>
+        <span class="spacer"></span>
+        ${canClear ? `<button class="btn danger sm" data-clear ${h.total ? "" : "disabled"}>Очистить историю</button>` : ""}</div>
+      ${h.events.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr>
+          <th>Когда</th><th>Событие</th><th>Диалог</th><th>Критерий</th><th>Кто</th><th>Значение</th><th class="num">Итог диалога</th><th>Комментарий</th>
+        </tr></thead><tbody>${h.events.map(e => `
+          <tr class="${e.appeal_id ? "click" : ""}" data-ap="${e.appeal_id ?? ""}" title="Открыть апелляцию">
+            <td class="small">${esc(fmtDate(e.created_at))}</td>
+            <td><span class="chip dot ${EVENT[e.action]?.[0] || "na"}">${EVENT[e.action]?.[1] || esc(e.action)}</span></td>
+            <td><span class="id">${esc(e.conversation_id || "—")}</span></td>
+            <td>${esc(e.criterion_title || e.criterion_id || "—")}</td>
+            <td>${esc(ROLE[e.role] || e.role)}</td>
+            <td class="small">${change(e)}</td>
+            <td class="num small">${score(e)}</td>
+            <td class="small">${esc(e.comment || "")}</td></tr>`).join("")}</tbody></table></div>`
+        : `<div class="empty-state">${icon("clock", 32)}<p>История пуста. Здесь появятся поданные апелляции и решения по ним.</p></div>`}`;
+    histEl.querySelector("[data-clear]")?.addEventListener("click", () => modal(`
+      <h2>Очистить историю апелляций?</h2>
+      <p>Будут удалены все ${h.total} записей журнала. Сами апелляции, их статусы и изменённые баллы <b>сохранятся</b>.</p>
+      <label class="row small"><input type="checkbox" data-ok> Я понимаю, что журнал нельзя восстановить</label>
+      <div class="row"><span class="spacer"></span><button class="btn ghost" data-close>Отмена</button><button class="btn danger" data-go disabled>Очистить</button></div>`,
+    (m, close) => {
+      m.querySelector("[data-ok]").onchange = e => { m.querySelector("[data-go]").disabled = !e.target.checked; };
+      m.querySelector("[data-go]").onclick = async e => {
+        e.target.disabled = true;
+        try {
+          const r = await api.del("/api/appeals/history");
+          close();
+          toast(`История очищена: удалено записей — ${r.deleted}`);
+          await loadHistory();
+        } catch (err) { toast(err.message, true); e.target.disabled = false; }
+      };
+    }));
+  }
+  histEl.addEventListener("click", async e => {
+    const tr = e.target.closest("tr[data-ap]");
+    if (!tr || !tr.dataset.ap) return;
+    filter = "";
+    await setTab();
+    await showDetail(+tr.dataset.ap);
+  });
+
+  async function setTab() {
+    const isHist = filter === "history";
+    el.querySelectorAll("[data-s]").forEach(b => b.classList.toggle("on", b.dataset.s === filter));
+    histEl.hidden = !isHist;
+    splitEl.hidden = isHist;
+    if (isHist) { history.replaceState(null, "", "#/appeals"); return loadHistory(); }
+    return loadList();
+  }
 
   async function loadList() {
     el.querySelectorAll("[data-s]").forEach(b => b.classList.toggle("on", b.dataset.s === filter));
@@ -91,7 +161,7 @@ export async function mount(el, { id }) {
 
   el.querySelector("[data-filter]").addEventListener("click", async e => {
     const b = e.target.closest("[data-s]");
-    if (b) { filter = b.dataset.s; await loadList(); }
+    if (b) { filter = b.dataset.s; await setTab(); }
   });
   listEl.addEventListener("click", e => {
     const it = e.target.closest("[data-id]");

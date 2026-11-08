@@ -7,11 +7,11 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import Appeal, ChecklistVersion, Conversation, Evaluation, now
+from ..models import Appeal, AppealEvent, ChecklistVersion, Conversation, Evaluation, now
 from ..services.scoring import ValidationError, compute_score, validate_value
 
 router = APIRouter(prefix="/api", tags=["appeals"])
@@ -49,6 +49,15 @@ def excerpt(conv: Conversation, turns: list[int], ctx: int = 1) -> list[dict]:
     return [t for t in conv.transcript if t["turn"] in want]
 
 
+def log_event(db: Session, a: Appeal, ev: Evaluation, action: str, role: str, *, old=None, new=None,
+              comment: str | None = None, score_before: float | None = None, score_after: float | None = None) -> None:
+    ver = db.get(ChecklistVersion, ev.checklist_version_id)
+    title = next((c.get("title") for c in ver.criteria if c["id"] == a.criterion_id), None)
+    db.add(AppealEvent(appeal_id=a.id, action=action, role=role, conversation_id=ev.conversation_id,
+                       criterion_id=a.criterion_id, criterion_title=title, old_value=old, new_value=new,
+                       comment=comment, score_before=score_before, score_after=score_after))
+
+
 def appeal_out(db: Session, a: Appeal, with_context: bool = False) -> dict:
     ev = db.get(Evaluation, a.evaluation_id)
     crit = next((c for c in ev.criteria or [] if c["criterion_id"] == a.criterion_id), {})
@@ -83,6 +92,9 @@ def create_appeal(body: AppealIn, x_role: str = Header(default="operator"), db: 
     a = Appeal(evaluation_id=ev.id, criterion_id=body.criterion_id, comment=body.comment, author_role=x_role,
                original_value=crit["value"], suggested_value=body.suggested_value)
     db.add(a)
+    db.flush()
+    log_event(db, a, ev, "created", x_role, old=crit["value"], new=body.suggested_value, comment=body.comment,
+              score_before=ev.final_score, score_after=ev.final_score)
     db.commit()
     return appeal_out(db, a, with_context=True)
 
@@ -98,6 +110,31 @@ def list_appeals(status: str | None = None, conversation_id: str | None = None, 
     if conversation_id:
         q = q.join(Evaluation, Evaluation.id == Appeal.evaluation_id).where(Evaluation.conversation_id == conversation_id)
     return [appeal_out(db, a) for a in db.execute(q).scalars()]
+
+
+@router.get("/appeals/history")
+def history(limit: int = 500, conversation_id: str | None = None, db: Session = Depends(get_db)):
+    """Stored appeal history (newest first): who filed / accepted / rejected what, value and score changes."""
+    q = select(AppealEvent).order_by(AppealEvent.created_at.desc(), AppealEvent.id.desc()).limit(min(limit, 5000))
+    if conversation_id:
+        q = q.where(AppealEvent.conversation_id == conversation_id)
+    rows = db.execute(q).scalars().all()
+    total = db.execute(select(func.count()).select_from(AppealEvent)).scalar_one()
+    return {"total": total, "events": [
+        {"id": e.id, "appeal_id": e.appeal_id, "action": e.action, "role": e.role, "conversation_id": e.conversation_id,
+         "criterion_id": e.criterion_id, "criterion_title": e.criterion_title, "old_value": e.old_value,
+         "new_value": e.new_value, "comment": e.comment, "score_before": e.score_before,
+         "score_after": e.score_after, "created_at": e.created_at} for e in rows]}
+
+
+@router.delete("/appeals/history")
+def clear_history(x_role: str = Header(default="operator"), db: Session = Depends(get_db)):
+    """Empty the history log (admin / lead). Appeals themselves and the scores they changed are kept."""
+    if x_role not in REVIEWER_ROLES:
+        raise HTTPException(403, f"role '{x_role}' cannot clear appeal history")
+    n = db.execute(delete(AppealEvent)).rowcount
+    db.commit()
+    return {"deleted": n}
 
 
 @router.get("/appeals/{appeal_id}")
@@ -130,6 +167,9 @@ def decide(appeal_id: int, body: DecisionIn, x_role: str = Header(default="lead"
         a.status, a.new_value = "rejected", None
     a.reviewer_role, a.reviewer_comment, a.improvement, a.decided_at = x_role, body.reason, body.improvement, now()
     db.flush()
+    before = ev.final_score
     recompute(db, ev)
+    log_event(db, a, ev, a.status, x_role, old=a.original_value, new=a.new_value, comment=body.reason,
+              score_before=before, score_after=ev.final_score)
     db.commit()
     return appeal_out(db, a, with_context=True)

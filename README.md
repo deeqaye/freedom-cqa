@@ -43,6 +43,7 @@ Without Postgres (`DATABASE_URL` unset), it uses SQLite in `data/cqa.db`.
 | `GET /api/conversations/{id}/evaluations` | this conversation's score under each checklist version |
 | `GET /api/stats/compare?group_id=` | the same conversations under each checklist: averages, critical count, biggest differences |
 | `POST /api/appeals` · `POST /api/appeals/{id}/decision` (header `X-Role: lead\|admin`) | dispute a criterion / accept or reject; the total is recalculated and the original is kept |
+| `GET /api/appeals/history` · `DELETE /api/appeals/history` (header `X-Role: lead\|admin`) | stored log of filed / accepted / rejected appeals (who, value and score change, comment); clearing empties only the log |
 | `GET /api/stats/overview?period=week\|month&checklist_id=` · `/api/stats/operators/{name}` | quality stats |
 | `GET /api/stats/cost?group_id=&ids=` | processing time and cost: per conversation, per 1000, per 1M tokens, by channel and model |
 | `GET /api/audio/{conversation_id}` | call recording (cached, seekable) |
