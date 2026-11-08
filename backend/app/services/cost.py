@@ -23,6 +23,7 @@ PRICES: dict[str, dict[str, float]] = {
     "claude-sonnet-4-6": {"input": 3.0, "output": 15.0, "cache_read": 0.30, "cache_write": 3.75},
     "claude-haiku-5-5": {"input": 0.10, "output": 0.50, "cache_read": 0.01, "cache_write": 0.125},
     "claude-haiku-4-5": {"input": 1.0, "output": 5.0, "cache_read": 0.10, "cache_write": 1.25},
+    "gpt-6-luna": {"input": 0.10, "output": 0.50},  # teammate's evaluator (it also reports cost_usd itself)
     "keyword-stub": {"input": 0.0, "output": 0.0},
 }
 try:

@@ -1,0 +1,3784 @@
+{
+  "schema_version": "1.0",
+  "team_name": "gold-proposed",
+  "model": {
+    "mode": "local",
+    "name": "human"
+  },
+  "results": [
+    {
+      "conversation_id": "p1-ru-001",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-002",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": " [правка: Клиент отказался от идентификации, оператор данные счёта не раскрывал и действий по счёту не делал — N/A, не «Да».]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-003",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 5,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 4,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 45.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-004",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-005",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": " [правка: Оператор ничего не уточнял (способ пополнения клиент назвал боту) — N/A.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 15,
+          "rationale": " [правка: На вопрос «банк или брокер возьмёт комиссию» ответа нет (названа только зависимость от банка); второй вопрос закрыт.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 7,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 85.38,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-006",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-007",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 10,
+          "rationale": " [правка: То же: клиент спросил, когда можно подавать вывод повторно, оператор ушёл от ответа.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 7,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 70.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-008",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-009",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": false,
+          "rationale": " [правка: Клиент возразил и повторил вопрос, оператор отмахнулся; в kz-015 и en-014 с тем же текстом стоит Нет.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 4,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 41.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-010",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-011",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-012",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-013",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-014",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": false,
+          "rationale": " [правка: «Где именно ищете?» — переспрос того, что клиент уже сообщил боту.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 7,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 63.12,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-015",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-016",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 4,
+          "rationale": " [правка: Клиент дважды поправлял оператора («Какое приложение? Я на компьютере»); сравните en-015 (7 при одной поправке).]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 51.25,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-017",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-018",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": " [правка: Данные счёта не раскрывались, запрос общий — N/A.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 0,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 4,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 20.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-019",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-020",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": " [правка: Клиент ясно описал ситуацию, оператор ответил сразу — N/A, не «Нет».]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-021",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": " [правка: Вопрос ясен, уточнять нечего — N/A.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": " [правка: Оператор корректно и простыми словами объяснил разницу Nasdaq/NYSE, клиент доволен — не 0.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-022",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 0,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": " [правка: Чат закрыл оператор без прощания (как в kz-013 и en-013, где стоит Нет) — не N/A.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 50.0,
+        "critical_flag": true
+      }
+    },
+    {
+      "conversation_id": "p1-ru-023",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": true
+      }
+    },
+    {
+      "conversation_id": "p1-ru-024",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": " [правка: Ответы ясные и по порядку, клиент подтвердил — нет сбоя, который оправдывал бы 7.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-025",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-026",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 5,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 4,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 26.25,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-027",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": " [правка: Все вопросы клиента закрыты по порядку; длинный чат сам по себе не сбой.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-028",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-ru-029",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 4,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 55.38,
+        "critical_flag": true
+      }
+    },
+    {
+      "conversation_id": "p1-ru-030",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-001",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-002",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": " [правка: Оператор ничего не уточнял — N/A (по правилу «Да» требует уточняющего вопроса).]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-003",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": [
+            13
+          ]
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-004",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": " [правка: Оператор ничего не уточнял, данных хватало — N/A, а не «Да».]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": " [правка: Оператор дал точный путь и попрощался; оскорблений, услуги в обход и раскрытия данных нет.]",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-005",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 7,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 85.38,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-006",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-007",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": " [правка: Оператор ничего не уточнял, данных хватало — N/A.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": " [правка: Общее правило про логин, данные счёта не раскрывались — идентификация не требовалась (N/A).]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-008",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": false,
+          "rationale": " [правка: «Здравствуйте.» без имени — по правилу нужны приветствие И представление (как в ru-014, где стоит Нет).]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": false,
+          "rationale": " [правка: Оператор переспросил, какой сайт, хотя клиент уже назвал его боту (реплика 5).]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": false,
+          "rationale": " [правка: Клиент выразил раздражение, оператор не отреагировал (в ru-014 оператор хотя бы ответил «Понял»).]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 7,
+          "rationale": " [правка: Клиенту пришлось повторить уже сказанное («Я же выше написал») — один заметный сбой.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 40.67,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-009",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-010",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": " [правка: Оператор назвал точный пункт меню, клиент подтвердил «Отключил» — полный ответ, не 0.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-011",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": null,
+          "rationale": " [правка: Последнее событие — «Связь с клиентом прервалась», оператор не успел попрощаться — N/A.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-012",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-013",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 92.31,
+        "critical_flag": true
+      }
+    },
+    {
+      "conversation_id": "p1-kz-014",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-kz-015",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": " [правка: Оператор ничего не уточнял; en-014 с тем же текстом размечен N/A.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 10,
+          "rationale": " [правка: Причина ограничения не названа, следующий шаг расплывчатый; ru-009 с тем же текстом получил 10.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 4,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 30.59,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-001",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": " [правка: Всё нужное клиент уже сказал боту, оператор ответил сразу — N/A, не «Нет».]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-002",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-003",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-004",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-005",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-006",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": [
+            13
+          ]
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-007",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 10,
+          "rationale": " [правка: Вопрос «когда можно повторить вывод» задан дважды и остался без ответа — существенный, значит 10 (то же для ru-007 ниже).]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 7,
+          "rationale": " [правка: Оператор проигнорировал прямой вопрос клиента; в ru-007 с тем же текстом стоит 7.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 70.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-008",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-009",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-010",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-011",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-012",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-013",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": " [правка: Оператор ничего не уточнял — N/A.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 92.31,
+        "critical_flag": true
+      }
+    },
+    {
+      "conversation_id": "p1-en-014",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 5,
+          "rationale": " [правка: Причина не названа, на «Will I hear back here?» оператор ответил «Goodbye»; согласовать с ru-009 (10) и kz-015 (10): не 0, шаг «передам команде» есть.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 4,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 24.71,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p1-en-015",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": false,
+          "rationale": " [правка: Первый ответ «Open settings…» — ни приветствия, ни имени.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 7,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 63.12,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p4-ru-003",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 7,
+          "rationale": " [правка: Оператор сначала неверно понял проблему (реплика 27, «изменения сведений»), клиент поправлял — один заметный сбой.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": null,
+          "rationale": " [правка: Оператор подвёл итог (реплика 76), но клиент положил трубку сразу после «спасибо» — прощаться было не с кем (спорно: можно оставить Да).]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 95.26,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p4-ru-002",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": false,
+          "rationale": " [правка: Звонок-перезвон: оператор представился, но «Здравствуйте» не сказал (строгое прочтение правила). Оставить Да, если считаете представление при перезвоне достаточным.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 90.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p4-ru-001",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": null,
+          "rationale": " [правка: Клиент завершил разговор сразу после объяснения оператора (реплика 44), попрощаться оператор не успел — N/A.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p4-ru-005",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": null,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 100.0,
+        "critical_flag": false
+      }
+    },
+    {
+      "conversation_id": "p4-ru-004",
+      "status": "ok",
+      "criteria": [
+        {
+          "criterion_id": "contact",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "discovery",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "identification",
+          "value": true,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "consultation",
+          "value": 20,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "empathy",
+          "value": false,
+          "rationale": " [правка: Клиент несколько раз сказал, что не может говорить при коллегах; оператор продолжил расспрашивать, не предложил удобную альтернативу.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "dialogue",
+          "value": 10,
+          "rationale": "",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "closure",
+          "value": null,
+          "rationale": " [правка: Клиент повесил трубку на реплике 114; «есть ли вопросы?» оператор сказал уже после — N/A.]",
+          "evidence_turns": []
+        },
+        {
+          "criterion_id": "critical",
+          "value": false,
+          "rationale": "",
+          "evidence_turns": []
+        }
+      ],
+      "score": {
+        "final_score": 84.21,
+        "critical_flag": false
+      }
+    }
+  ]
+}

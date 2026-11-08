@@ -4,7 +4,7 @@ Damir Kim @deeqaye, Nursultan Chokushev @exXzic
 This prototype scores operator conversations (chats and calls, in RU, KZ and EN) against a configurable checklist. It shows the evidence behind each score and supports appeals and review.
 
 - **Service** (`backend/`): FastAPI and SQLAlchemy. It handles storage, versioned checklists, deterministic scoring, the evaluation queue and the `results.json` export.
-- **NLP** (`nlp/`): an LLM evaluator behind one function. See **[nlp/GUIDE.md](nlp/GUIDE.md)** (walkthrough) and **[nlp/CONTRACT.md](nlp/CONTRACT.md)** (spec).
+- **NLP** (`nlp/`): `nlp/evaluator.py`, an LLM evaluator (`gpt-6-luna`, OpenAI API) behind one function: one call grades all criteria from `checklist["criteria"]`, a mini call translates the reasoning to Russian and Kazakh. Method, experiments and metrics: **[nlp/README.md](nlp/README.md)** (96.08 weighted agreement with team labels on DEV); research files in `nlp/research/`. Integration docs: **[nlp/GUIDE.md](nlp/GUIDE.md)**, **[nlp/CONTRACT.md](nlp/CONTRACT.md)**.
 - **UI** (`frontend/`): plain HTML, CSS and JavaScript, served at `/ui/`.
 
 ## Run
@@ -25,7 +25,7 @@ Two checklists ship: the organizers' `chat-quality` (used for `results.json`) an
 ## Deploy (Render)
 1. Push this repo to GitHub.
 2. In Render, go to **New + → Blueprint**, pick the repo, and Render reads `render.yaml`. It creates a free Docker web service and a free Postgres.
-3. Set the `ORG_API_URL` secret when prompted. It's only needed for fetching new datasets (the control set); DEV is already in `data/DEV.json`.
+3. Set the secrets when prompted: `ORG_API_URL` (fetching new datasets such as the control set; DEV is already in `data/DEV.json`) and **`OPENAI_API_KEY`** (the evaluator; without it every evaluation ends with "OPENAI_API_KEY is not set"). `EVALUATOR=stub` runs the keyword stub instead.
 4. On first start the service seeds the checklist and DEV, and imports `results/*/results.json`, so scores show without re-running the model.
 
 The free web service sleeps after 15 minutes idle, so open it about a minute before judging. Each push to `main` redeploys automatically.
@@ -67,12 +67,14 @@ If the evaluator reports tokens without a cost, the service prices them from the
 - API: `GET /api/stats/cost?ids=<batch ids>` gives one run, including its wall-clock time and throughput; `?group_id=DEV` gives the latest evaluation of each conversation.
 - `scripts/export_results.py ... --evaluate` prints the same summary.
 
-| DEV (65 conversations) | value |
+| DEV (65 conversations, one run, 4 threads) | value |
 |---|---|
-| model | _TBD_ |
-| time per conversation (avg / p95) | _TBD_ |
-| tokens per conversation (in → out) | _TBD_ |
-| cost per conversation / per 1000 | _TBD_ |
+| model | `gpt-6-luna` (OpenAI, `external_api`), $0.10 / $0.50 per 1M input / output tokens |
+| time per conversation (avg / p95) | 15.9 s / 24.7 s (chat 14.8 s, call 28.8 s); whole DEV in 272 s |
+| tokens per conversation (in → out) | ≈ 5 517 → 1 485 (evaluation + translation call) |
+| cost per conversation / per 1000 | $0.00129 / ≈ $1.29 (chat $0.00123, call $0.00209); whole DEV $0.084 |
+
+Measured by the NLP evaluator run (see [nlp/README.md](nlp/README.md) §5).
 
 ## Submitting results
 ```bash
