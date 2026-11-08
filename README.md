@@ -4,7 +4,7 @@ Damir Kim @deeqaye, Nursultan Chokushev @exXzic
 This prototype scores operator conversations (chats and calls, in RU, KZ and EN) against a configurable checklist. It shows the evidence behind each score and supports appeals and review.
 
 - **Service** (`backend/`): FastAPI and SQLAlchemy. It handles storage, versioned checklists, deterministic scoring, the evaluation queue and the `results.json` export.
-- **NLP** (`nlp/`): `nlp/evaluator.py`, an LLM evaluator (`gpt-6-luna`, OpenAI API) behind one function: one call grades all criteria from `checklist["criteria"]`, a mini call translates the reasoning to Russian and Kazakh. Method, experiments and metrics: **[nlp/README.md](nlp/README.md)** (96.08 weighted agreement with team labels on DEV); research files in `nlp/research/`. Integration docs: **[nlp/GUIDE.md](nlp/GUIDE.md)**, **[nlp/CONTRACT.md](nlp/CONTRACT.md)**.
+- **NLP** (`nlp/`): `nlp/evaluator.py`, an LLM evaluator (`gpt-6-luna`, OpenAI API) behind one function: one call grades all criteria from `checklist["criteria"]`, a mini call translates the reasoning to Russian and Kazakh. Method, experiments and metrics: **[nlp/README.md](nlp/README.md)** (95.77 weighted agreement with team labels on DEV); research files in `nlp/research/`. Integration docs: **[nlp/GUIDE.md](nlp/GUIDE.md)**, **[nlp/CONTRACT.md](nlp/CONTRACT.md)**.
 - **UI** (`frontend/`): plain HTML, CSS and JavaScript, served at `/ui/`.
 
 ## Run
@@ -70,9 +70,9 @@ If the evaluator reports tokens without a cost, the service prices them from the
 | DEV (65 conversations, one run, 4 threads) | value |
 |---|---|
 | model | `gpt-6-luna` (OpenAI, `external_api`), $0.10 / $0.50 per 1M input / output tokens |
-| time per conversation (avg / p95) | 15.9 s / 24.7 s (chat 14.8 s, call 28.8 s); whole DEV in 272 s |
-| tokens per conversation (in → out) | ≈ 5 517 → 1 485 (evaluation + translation call) |
-| cost per conversation / per 1000 | $0.00129 / ≈ $1.29 (chat $0.00123, call $0.00209); whole DEV $0.084 |
+| time per conversation (avg / p95) | 15.5 s / 27.5 s (chat 14.2 s, call 31.7 s); whole DEV in 270 s |
+| tokens per conversation (in → out) | ≈ 5 597 → 1 560 (evaluation + translation call) |
+| cost per conversation / per 1000 | $0.00134 / ≈ $1.34 (chat $0.00126, call $0.00233); whole DEV $0.087 |
 
 Measured by the NLP evaluator run (see [nlp/README.md](nlp/README.md) §5).
 

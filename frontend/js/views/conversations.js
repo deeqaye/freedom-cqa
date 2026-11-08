@@ -382,7 +382,7 @@ async function openDataAdmin(onChanged) {
     </div>
     <div class="card stack" style="gap:8px">
       <h3 style="margin:0">Демо-набор</h3>
-      <p class="small" style="margin:0">Загрузить DEV (65 диалогов) и сохранённые в репозитории оценки для неоценённых диалогов.</p>
+      <p class="small" style="margin:0">Загрузить наборы из data/ (DEV — 65 диалогов, а также сохранённые FBroker и Swap) и сохранённые в репозитории оценки для неоценённых диалогов.</p>
       <div class="row"><span class="spacer"></span><button class="btn ghost" data-demo>Загрузить демо-набор</button></div>
     </div>
     <div class="small" data-err style="color:var(--bad)"></div>

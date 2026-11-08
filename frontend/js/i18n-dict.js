@@ -416,7 +416,7 @@ export const DICT = {
   "Также сбросить чек-листы к исходной версии v1": ["Чек-парақтарды бастапқы v1 нұсқасына да қайтару", "Also reset checklists to the original version v1"],
   "Я понимаю, что это действие нельзя отменить": ["Бұл әрекетті болдырмау мүмкін емес екенін түсінемін", "I understand this cannot be undone"],
   "Демо-набор": ["Демо-жинақ", "Demo dataset"],
-  "Загрузить DEV (65 диалогов) и сохранённые в репозитории оценки для неоценённых диалогов.": ["DEV (65 диалог) және репозиторийде сақталған бағаларды бағаланбаған диалогтар үшін жүктеу.", "Load DEV (65 dialogues) and the scores saved in the repository for ungraded dialogues."],
+  "Загрузить наборы из data/ (DEV — 65 диалогов, а также сохранённые FBroker и Swap) и сохранённые в репозитории оценки для неоценённых диалогов.": ["data/ ішіндегі жинақтарды (DEV — 65 диалог, сондай-ақ сақталған FBroker және Swap) және репозиторийде сақталған бағаларды бағаланбаған диалогтар үшін жүктеу.", "Load the datasets in data/ (DEV — 65 dialogues, plus the saved FBroker and Swap) and the scores saved in the repository for ungraded dialogues."],
   "Загрузить демо-набор": ["Демо-жинақты жүктеу", "Load the demo dataset"],
   "Удалено: {c} диалогов, {e} оценок, {a} апелляций": ["Жойылды: {c} диалог, {e} бағалау, {a} апелляция", "Deleted: {c} dialogues, {e} evaluations, {a} appeals"],
   "Загружено: {c} диалогов, {e} оценок": ["Жүктелді: {c} диалог, {e} бағалау", "Loaded: {c} dialogues, {e} evaluations"],

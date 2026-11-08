@@ -20,7 +20,10 @@ def test_reset_stays_empty_after_restart_and_demo_reload():
     with TestClient(app) as c:
         assert c.get("/api/conversations").json() == []
         r = c.post("/api/admin/seed-demo", headers={"X-Role": "admin"})
-        assert r.status_code == 200 and r.json()["now"]["conversations"] == 65
+        assert r.status_code == 200
+        groups = [x["group_id"] for x in c.get("/api/conversations").json()]
+        assert groups.count("DEV") == 65  # plus any other saved datasets in data/ (FBroker 10, Swap 3)
+        assert groups.count("FBroker") == 10 and groups.count("Swap") == 3
         # reset checklists back to the seed v1
         c.put("/api/checklists/chat-quality", json={"criteria": c.get("/api/checklists/chat-quality").json()["version"]["criteria"]})
         r = c.post("/api/admin/reset", json={"confirm": "DELETE", "reset_checklists": True}, headers={"X-Role": "admin"})
