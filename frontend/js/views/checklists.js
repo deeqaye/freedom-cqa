@@ -13,15 +13,15 @@ export async function mount(el) {
     <div class="page-head"><div><h1>Чек-листы</h1><div class="sub" data-sub></div></div>
       <div class="row"><select data-cl>${list.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}</select>
         <select data-ver aria-label="Версия"></select></div></div>
-    ${canEdit ? "" : `<div class="alert info" style="margin-bottom:12px">Роль «Оператор» — только просмотр. Редактирование доступно администратору и главному специалисту.</div>`}
+    ${canEdit ? "" : `<div class="alert info mb-2">Роль «Оператор» — только просмотр. Редактирование доступно администратору и главному специалисту.</div>`}
     <div class="stack">
       <div class="card row" data-bar>
         <span class="weights" data-w></span><span class="spacer"></span>
-        ${canEdit ? `<button class="btn ghost" data-add>+ Критерий</button><input data-note placeholder="Комментарий к версии" style="width:220px"><button class="btn" data-save>Сохранить новую версию</button>` : ""}
+        ${canEdit ? `<button class="btn ghost" data-add>+ Критерий</button><input data-note placeholder="Комментарий к версии" class="w-220"><button class="btn" data-save>Сохранить новую версию</button>` : ""}
       </div>
       <div class="stack" data-crits></div>
       <div class="card stack">
-        <h2 style="margin:0">Применить чек-лист к диалогам</h2>
+        <h2 class="m-0">Применить чек-лист к диалогам</h2>
         <div class="row"><span>Набор</span><select data-group></select>
           <span class="muted small" data-apply-ver></span><span class="spacer"></span>
           <button class="btn" data-apply>Запустить оценку</button></div>
@@ -54,11 +54,11 @@ export async function mount(el) {
       <div class="cl-crit ${c._new ? "new" : ""}" data-i="${i}">
         <label class="f">ID (код)<input data-k="id" value="${esc(c.id)}" ${dis} ${c._new ? "" : 'title="Код используется в results.json"'}></label>
         <label class="f wide">Название<input data-k="title" value="${esc(c.title)}" ${dis}></label>
-        <label class="f" style="grid-column: span 2">Секция<input data-k="section" value="${esc(c.section)}" list="sections" ${dis}></label>
+        <label class="f span2">Секция<input data-k="section" value="${esc(c.section)}" list="sections" ${dis}></label>
         <label class="f">Тип ответа<select data-k="type" ${dis}>${Object.entries(TYPES).map(([k, v]) => `<option value="${k}" ${c.type === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
         <label class="f">Вес<input type="number" min="0" step="1" data-k="weight" value="${c.type === "flag" ? 0 : c.weight}" ${c.type === "flag" ? "disabled" : dis}></label>
-        <label class="f" style="grid-column: span 2" ${c.type === "scale" ? "" : "hidden"}>Ступени шкалы (через запятую)<input data-k="steps" value="${esc((c.steps || []).join(", "))}" ${dis}></label>
-        <label class="f" style="grid-column: span 2; flex-direction:row; align-items:center; gap:8px; padding-top:18px"><input type="checkbox" data-k="na_allowed" ${c.na_allowed ? "checked" : ""} ${dis}> Допускается N/A</label>
+        <label class="f span2" ${c.type === "scale" ? "" : "hidden"}>Ступени шкалы (через запятую)<input data-k="steps" value="${esc((c.steps || []).join(", "))}" ${dis}></label>
+        <label class="f span2 inline"><input type="checkbox" data-k="na_allowed" ${c.na_allowed ? "checked" : ""} ${dis}> Допускается N/A</label>
         <label class="f full">Описание — когда ставить «Да» / как оценивать<textarea rows="2" data-k="description" ${dis}>${esc(c.description)}</textarea></label>
         <label class="f wide" ${c.na_allowed ? "" : "hidden"}>Условие N/A<textarea rows="2" data-k="na_condition" ${dis}>${esc(c.na_condition || "")}</textarea></label>
         <label class="f ${c.na_allowed ? "wide" : "full"}">Подсказка для модели (мини-промпт)<textarea rows="2" data-k="prompt_hint" ${dis}>${esc(c.prompt_hint || "")}</textarea></label>

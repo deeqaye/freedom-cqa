@@ -42,7 +42,7 @@ export function mount(el) {
     <div class="stack">
       <div class="tiles roles">${ROLES.map(([k, name, about]) => `
         <div class="card tile ${k === me ? "me" : ""}"><div class="k">${k === me ? "Ваша текущая роль" : "Роль"}</div>
-          <div class="v" style="font-size:20px">${name}</div><p class="small" style="margin:6px 0 0">${about}</p></div>`).join("")}</div>
+          <div class="v fs-20">${name}</div><p class="small m-0">${about}</p></div>`).join("")}</div>
 
       <div class="card"><h2>Кто что может</h2>
         <table class="tbl roles-matrix"><thead><tr><th>Действие</th>${ROLES.map(([k, n]) => `<th class="num ${k === me ? "me" : ""}">${n}</th>`).join("")}</tr></thead>

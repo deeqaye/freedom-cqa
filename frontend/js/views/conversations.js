@@ -1,5 +1,6 @@
 import { api, getRole } from "../api.js";
-import { CHANNEL, esc, fmtNum, modal, costLine, runBatch, scoreTone, toast } from "../ui.js";
+import { icon } from "../icons.js";
+import { CHANNEL, esc, fmtNum, modal, costLine, runBatch, scoreTone, skeleton, toast } from "../ui.js";
 
 // Sortable columns: key -> [header, value getter]. null values always go last.
 const STATUS_RANK = { ok: 0, error: 1, running: 2, queued: 3 };
@@ -18,6 +19,7 @@ const byId = (a, b) => a.id.localeCompare(b.id, "ru", { numeric: true });
 const cmpVal = (a, b) => (typeof a === "number" && typeof b === "number" ? a - b : String(a).localeCompare(String(b), "ru", { numeric: true }));
 
 const STATUS = { ok: ["good", "Оценён"], error: ["bad", "Ошибка"], queued: ["info", "В очереди"], running: ["info", "Оценивается"] };
+const CRIT_CHIP = `<span class="chip bad">${icon("alert", 13)}Да</span>`;
 
 export async function mount(el) {
   const state = { group: "", language: "", channel: "", q: "", sortKey: "", sortDir: "" };  // one sorted column at a time
@@ -30,7 +32,7 @@ export async function mount(el) {
       <div><h1>Диалоги</h1><div class="sub" data-count></div></div>
       <div class="row">
         ${getRole() === "admin" ? `<button class="btn ghost" data-admin>Данные…</button>` : ""}
-        <button class="btn" data-load>⤓ Загрузить набор</button>
+        <button class="btn" data-load>${icon("upload", 16)}Загрузить набор</button>
       </div>
     </div>
     <div class="card stack">
@@ -38,18 +40,18 @@ export async function mount(el) {
         <select data-f="group"><option value="">Все наборы</option></select>
         <select data-f="language"><option value="">Все языки</option><option>RU</option><option>KZ</option><option>EN</option></select>
         <select data-f="channel"><option value="">Все каналы</option><option value="agent chat">Чат</option><option value="voice call">Звонок</option></select>
-        <input data-f="q" placeholder="Поиск по ID / оператору" style="width:200px">
+        <input type="search" data-f="q" placeholder="Поиск по ID / оператору" class="w-200">
         <span class="spacer"></span>
         <select data-cl>${checklists.map(c => `<option value="${esc(c.id)}">${esc(c.name)} · v${c.active_version}</option>`).join("")}</select>
         <button class="btn ghost" data-eval-sel disabled>Оценить выбранные</button>
         <button class="btn" data-eval-all>Оценить набор</button>
       </div>
       <div data-progress></div>
-      <div style="overflow:auto">
+      <div class="tbl-wrap">
         <table class="tbl">
-          <thead><tr><th><input type="checkbox" data-all aria-label="Выбрать все"></th>${COLS.map(([k, label, , cls]) =>
+          <thead><tr><th class="check"><input type="checkbox" data-all aria-label="Выбрать все"></th>${COLS.map(([k, label, , cls]) =>
             `<th class="sortable ${cls || ""}" data-sort="${k}" aria-sort="none"><button type="button">${label}<span class="sort-ind" aria-hidden="true"></span></button></th>`).join("")}</tr></thead>
-          <tbody></tbody>
+          <tbody>${`<tr><td colspan="9" class="empty-cell">${skeleton("table")}</td></tr>`}</tbody>
         </table>
       </div>
     </div>`;
@@ -115,18 +117,23 @@ export async function mount(el) {
       const e = r.evaluation;
       const st = e ? STATUS[e.status] : ["na", "Не оценён"];
       const changed = e && e.final_score !== e.original_score;
-      return `<tr class="click" data-id="${esc(r.id)}">
-        <td onclick="event.stopPropagation()"><input type="checkbox" data-sel="${esc(r.id)}" ${selected.has(r.id) ? "checked" : ""}></td>
-        <td><b>${esc(r.id)}</b></td>
-        <td>${r.has_audio ? "🎧 " : ""}${esc(CHANNEL[r.channel] || r.channel)}</td>
+      const ok = e && e.status === "ok";
+      return `<tr class="click ${selected.has(r.id) ? "picked" : ""}" data-id="${esc(r.id)}">
+        <td class="check" onclick="event.stopPropagation()"><input type="checkbox" data-sel="${esc(r.id)}" ${selected.has(r.id) ? "checked" : ""}></td>
+        <td><span class="id">${esc(r.id)}</span></td>
+        <td><span class="cell-ch">${icon(r.channel === "voice call" || r.has_audio ? "phone" : "chat", 15)}${esc(CHANNEL[r.channel] || r.channel)}</span></td>
         <td>${esc(r.language)}</td>
         <td>${esc(r.operator_name || "—")}</td>
         <td class="num">${r.turns}</td>
-        <td class="num">${e && e.status === "ok" ? `<span class="chip ${scoreTone(e.final_score)}">${fmtNum(e.final_score)}</span>${changed ? ' <span class="small muted" title="Изменено апелляцией">*</span>' : ""}` : "—"}</td>
-        <td>${e && e.critical_flag ? '<span class="chip bad">⚠ Да</span>' : e && e.status === "ok" ? '<span class="muted">Нет</span>' : ""}</td>
-        <td><span class="chip ${st[0]}">${st[1]}</span></td>
+        <td class="num">${ok ? `<span class="score-cell"><span><span class="chip ${scoreTone(e.final_score)}">${fmtNum(e.final_score)}</span>${changed ? ' <span class="small muted" title="Изменено апелляцией">*</span>' : ""}</span>
+          <span class="mini ${scoreTone(e.final_score)}" aria-hidden="true"><i style="width:${Math.max(0, Math.min(100, e.final_score || 0))}%"></i></span></span>` : '<span class="muted">—</span>'}</td>
+        <td>${e && e.critical_flag ? CRIT_CHIP : ok ? '<span class="muted">Нет</span>' : ""}</td>
+        <td><span class="chip dot ${st[0]}">${st[1]}</span></td>
       </tr>`;
-    }).join("") || `<tr><td colspan="9" class="empty">Нет диалогов. Нажмите «Загрузить набор».</td></tr>`;
+    }).join("") || `<tr><td colspan="9" class="empty-cell"><div class="empty-state">${icon("inbox", 36)}
+        <h2>${rows.length ? "Ничего не найдено" : "Нет диалогов"}</h2>
+        <p>${rows.length ? "Измените фильтры или строку поиска." : "Загрузите набор по group_id, ссылке или файлу JSON."}</p>
+        ${rows.length ? "" : `<button class="btn" data-load-empty>${icon("upload", 16)}Загрузить набор</button>`}</div></td></tr>`;
     el.querySelector("[data-eval-sel]").disabled = !selected.size;
     el.querySelector("[data-eval-sel]").textContent = selected.size ? `Оценить выбранные (${selected.size})` : "Оценить выбранные";
   }
@@ -156,6 +163,7 @@ export async function mount(el) {
     draw();
   });
   tbody.addEventListener("click", e => {
+    if (e.target.closest("[data-load-empty]")) return el.querySelector("[data-load]").click();
     const tr = e.target.closest("tr[data-id]");
     if (tr) location.hash = `#/c/${encodeURIComponent(tr.dataset.id)}`;
   });
@@ -199,20 +207,20 @@ function openLoader(onLoaded) {
     <div class="seg" data-tabs>
       <button data-t="gid" class="on">По group_id</button><button data-t="url">По ссылке</button><button data-t="file">Файл JSON</button>
     </div>
-    <div data-pane="gid" class="stack" style="gap:8px">
+    <div data-pane="gid" class="stack gap-1">
       <label class="f">group_id<input data-gid placeholder="например, DEV" autocomplete="off"></label>
       <p class="small muted">Запрос к API организаторов через сервер (адрес API задан в настройках сервера).</p>
     </div>
-    <div data-pane="url" class="stack" style="gap:8px" hidden>
+    <div data-pane="url" class="stack gap-1" hidden>
       <label class="f">Полная ссылка GET (вместе с group_id)<textarea rows="3" data-url placeholder="https://…powerplatform.com/…&group_id=…"></textarea></label>
       <label class="f">group_id (необязательно — иначе берётся из ответа или ссылки)<input data-url-gid autocomplete="off"></label>
       <p class="small muted">Принимаются только https-ссылки на домен API организаторов.</p>
     </div>
-    <div data-pane="file" class="stack" style="gap:8px" hidden>
+    <div data-pane="file" class="stack gap-1" hidden>
       <label class="f">Файл JSON — ответ API, {records:[…]} или массив записей<input type="file" accept=".json,application/json" data-file></label>
       <label class="f">group_id (необязательно)<input data-file-gid autocomplete="off"></label>
     </div>
-    <div class="small" data-err style="color:var(--bad)"></div>
+    <div class="small text-bad" data-err></div>
     <div class="row"><span class="spacer"></span><button class="btn ghost" data-close>Отмена</button><button class="btn" data-go>Загрузить</button></div>`,
   (m, close) => {
     let tab = "gid";
@@ -269,20 +277,20 @@ async function openDataAdmin(onChanged) {
     <h2>Управление данными</h2>
     <p>Сейчас в базе: <b>${c.conversations}</b> диалогов, <b>${c.evaluations}</b> оценок, <b>${c.appeals}</b> апелляций,
       <b>${c.checklist_versions}</b> версий чек-листов.</p>
-    <div class="card stack" style="gap:8px;border-color:#efc4bb">
-      <h3 style="margin:0;color:var(--bad)">Очистить данные</h3>
-      <p class="small" style="margin:0">Удаляет все диалоги, оценки и апелляции — чтобы загрузить набор и оценить его с нуля.
+    <div class="card stack gap-1 danger-card">
+      <h3 class="m-0 text-bad">Очистить данные</h3>
+      <p class="small m-0">Удаляет все диалоги, оценки и апелляции — чтобы загрузить набор и оценить его с нуля.
         Данные не вернутся сами после перезапуска сервера.</p>
       <label class="row small"><input type="checkbox" data-cl> Также сбросить чек-листы к исходной версии v1</label>
       <label class="row small"><input type="checkbox" data-ok> Я понимаю, что это действие нельзя отменить</label>
       <div class="row"><span class="spacer"></span><button class="btn danger" data-reset disabled>Очистить</button></div>
     </div>
-    <div class="card stack" style="gap:8px">
-      <h3 style="margin:0">Демо-набор</h3>
-      <p class="small" style="margin:0">Загрузить DEV (65 диалогов) и сохранённые в репозитории оценки для неоценённых диалогов.</p>
+    <div class="card stack gap-1">
+      <h3 class="m-0">Демо-набор</h3>
+      <p class="small m-0">Загрузить DEV (65 диалогов) и сохранённые в репозитории оценки для неоценённых диалогов.</p>
       <div class="row"><span class="spacer"></span><button class="btn ghost" data-demo>Загрузить демо-набор</button></div>
     </div>
-    <div class="small" data-err style="color:var(--bad)"></div>
+    <div class="small text-bad" data-err></div>
     <div class="row"><span class="spacer"></span><button class="btn ghost" data-close>Закрыть</button></div>`,
   (m, close) => {
     const $ = s => m.querySelector(s);

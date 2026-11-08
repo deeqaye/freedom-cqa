@@ -1,5 +1,6 @@
 import { api, getRole } from "../api.js";
-import { attachTips, esc, fmtDur, fmtNum, fmtUsd, scoreTone } from "../ui.js";
+import { icon } from "../icons.js";
+import { attachTips, esc, fmtDur, fmtNum, fmtUsd, scoreTone, skeleton } from "../ui.js";
 
 export async function mount(el) {
   const isAdmin = getRole() !== "operator";
@@ -22,7 +23,7 @@ export async function mount(el) {
         <select data-op ${isAdmin ? "" : ""}>${isAdmin ? `<option value="">Все операторы</option>` : ""}${operators.map(o => `<option ${!isAdmin && o === operator ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
         <div class="seg" data-period><button data-p="week" class="on">По неделям</button><button data-p="month">По месяцам</button></div>
       </div></div>
-    <div class="stack" data-body></div>`;
+    <div class="stack" data-body>${skeleton("tiles")}<div class="card">${skeleton("table", 5)}</div></div>`;
   if (isAdmin) operator = "";
   const body = el.querySelector("[data-body]");
   attachTips(body);
@@ -32,13 +33,13 @@ export async function mount(el) {
     const W = 640, H = 200, pad = 28, bw = Math.min(56, (W - pad) / series.length - 12);
     const x = i => pad + 6 + i * ((W - pad) / series.length);
     const y = v => H - 22 - (v / 100) * (H - 40);
-    return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Средний балл по периодам">
-      ${[0, 50, 100].map(v => `<line x1="${pad}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#e3e8e4"/><text x="0" y="${y(v) + 4}" font-size="11" fill="#8a978e">${v}</text>`).join("")}
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Средний балл по периодам">
+      ${[0, 50, 100].map(v => `<line x1="${pad}" x2="${W}" y1="${y(v)}" y2="${y(v)}" class="grid"/><text class="axis" x="0" y="${y(v) + 4}" font-size="11">${v}</text>`).join("")}
       ${series.map((s, i) => `<g data-tip="<b>${esc(s.period)}</b><br>Средний балл: ${fmtNum(s.avg_score)}<br>Диалогов: ${s.count}">
         <rect x="${x(i) - 4}" y="0" width="${bw + 8}" height="${H}" fill="transparent"/>
-        <path d="M${x(i)},${y(0)} V${y(s.avg_score || 0) + 4} q0,-4 4,-4 h${bw - 8} q4,0 4,4 V${y(0)} Z" fill="#1f7a3a"/>
-        <text x="${x(i) + bw / 2}" y="${y(s.avg_score || 0) - 6}" text-anchor="middle" font-size="12" fill="#17231b">${fmtNum(s.avg_score, 1)}</text>
-        <text x="${x(i) + bw / 2}" y="${H - 6}" text-anchor="middle" font-size="11" fill="#4c5c51">${esc(s.period)}</text></g>`).join("")}
+        <path d="M${x(i)},${y(0)} V${y(s.avg_score || 0) + 4} q0,-4 4,-4 h${bw - 8} q4,0 4,4 V${y(0)} Z" class="bar"/>
+        <text x="${x(i) + bw / 2}" y="${y(s.avg_score || 0) - 6}" text-anchor="middle" font-size="12" class="lbl">${fmtNum(s.avg_score, 1)}</text>
+        <text x="${x(i) + bw / 2}" y="${H - 6}" text-anchor="middle" font-size="11" class="per">${esc(s.period)}</text></g>`).join("")}
     </svg>`;
   }
 
@@ -57,11 +58,11 @@ export async function mount(el) {
     const q = `period=${period}${clId ? `&checklist_id=${encodeURIComponent(clId)}` : ""}`;
     const d = operator ? await api.get(`/api/stats/operators/${encodeURIComponent(operator)}?${q}`)
       : await api.get(`/api/stats/overview?${q}`);
-    const tiles = [["Средний балл", fmtNum(d.avg_score)], ["Оценено диалогов", d.count], ["С грубыми ошибками", d.critical_count]];
-    if (!operator) tiles.push(["Открытых апелляций", d.appeals.open]);
-    else tiles.push(["Лучший / худший", d.conversations.length ? `${fmtNum(Math.max(...d.conversations.map(c => c.final_score ?? 0)), 0)} / ${fmtNum(Math.min(...d.conversations.map(c => c.final_score ?? 100)), 0)}` : "—"]);
+    const tiles = [["Средний балл", fmtNum(d.avg_score), "chart"], ["Оценено диалогов", d.count, "checklist"], ["С грубыми ошибками", d.critical_count, "alert"]];
+    if (!operator) tiles.push(["Открытых апелляций", d.appeals.open, "scale"]);
+    else tiles.push(["Лучший / худший", d.conversations.length ? `${fmtNum(Math.max(...d.conversations.map(c => c.final_score ?? 0)), 0)} / ${fmtNum(Math.min(...d.conversations.map(c => c.final_score ?? 100)), 0)}` : "—", "user"]);
     body.innerHTML = `
-      <div class="tiles">${tiles.map(([k, v]) => `<div class="card tile"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("")}</div>
+      <div class="tiles">${tiles.map(([k, v, ic]) => `<div class="card tile"><div class="k">${icon(ic, 15)}${k}</div><div class="v">${v}</div></div>`).join("")}</div>
       <div class="grid2">
         <div class="card"><h2>Средний балл ${period === "week" ? "по неделям" : "по месяцам"}</h2>${seriesChart(d.series)}
           <p class="small muted">Для чатов без даты в данных используется дата загрузки.</p></div>
@@ -69,7 +70,7 @@ export async function mount(el) {
       </div>
       ${operator ? `<div class="card"><h2>Диалоги оператора</h2><table class="tbl"><thead><tr><th>ID</th><th>Язык</th><th class="num">Балл</th><th>Грубая ошибка</th></tr></thead><tbody>
           ${d.conversations.map(c => `<tr class="click" data-c="${esc(c.id)}"><td>${esc(c.id)}</td><td>${esc(c.language)}</td>
-            <td class="num"><span class="chip ${scoreTone(c.final_score)}">${fmtNum(c.final_score)}</span></td><td>${c.critical_flag ? '<span class="chip bad">⚠ Да</span>' : "Нет"}</td></tr>`).join("")}
+            <td class="num"><span class="chip ${scoreTone(c.final_score)}">${fmtNum(c.final_score)}</span></td><td>${c.critical_flag ? '<span class="chip bad">${icon("alert", 13)}Да</span>' : "Нет"}</td></tr>`).join("")}
         </tbody></table></div>`
         : `<div class="grid2">
           <div class="card"><h2>Операторы</h2><table class="tbl"><thead><tr><th>Оператор</th><th class="num">Диалогов</th><th class="num">Средний балл</th><th class="num">Грубые</th></tr></thead><tbody>
@@ -78,7 +79,7 @@ export async function mount(el) {
           </tbody></table></div>
           <div class="card"><h2>По языкам</h2><table class="tbl"><thead><tr><th>Язык</th><th class="num">Средний балл</th></tr></thead><tbody>
             ${Object.entries(d.by_language).map(([l, v]) => `<tr><td>${esc(l)}</td><td class="num">${fmtNum(v)}</td></tr>`).join("")}</tbody></table>
-            <h3 style="margin-top:14px">Апелляции</h3><p>Открыто: <b>${d.appeals.open}</b> · принято: <b>${d.appeals.accepted}</b> · отклонено: <b>${d.appeals.rejected}</b></p></div>
+            <h3 class="mt-3">Апелляции</h3><p>Открыто: <b>${d.appeals.open}</b> · принято: <b>${d.appeals.accepted}</b> · отклонено: <b>${d.appeals.rejected}</b></p></div>
         </div>`}
       ${!operator && isAdmin ? compareCard(await api.get("/api/stats/compare").catch(() => null)) : ""}
       ${!operator && isAdmin ? costCard(await api.get("/api/stats/cost").catch(() => null)) : ""}`;
@@ -99,7 +100,7 @@ export async function mount(el) {
         <tr><td>Средний балл (общие ${d.shared_count})</td>${cols.map(c => `<td class="num"><b>${fmtNum(d.shared_avg[c.version_id])}</b></td>`).join("")}</tr>
         <tr><td>С грубыми ошибками</td>${cols.map(c => `<td class="num">${c.critical_count}</td>`).join("")}</tr>
       </tbody></table>
-      ${top.length ? `<h3 style="margin-top:14px">Наибольшее расхождение</h3>
+      ${top.length ? `<h3 class="mt-3">Наибольшее расхождение</h3>
         <table class="tbl"><thead><tr><th>Диалог</th>${head}<th class="num">Разница</th></tr></thead><tbody>
         ${top.map(r => `<tr class="click" data-c="${esc(r.conversation_id)}"><td>${esc(r.conversation_id)}</td>
           ${cols.map(c => `<td class="num"><span class="chip ${scoreTone(r.scores[c.version_id])}">${fmtNum(r.scores[c.version_id])}</span></td>`).join("")}
@@ -115,7 +116,7 @@ export async function mount(el) {
       ["Стоимость на диалог", fmtUsd(c.cost.avg_per_evaluation_usd)],
       ["На 1000 диалогов", fmtUsd(c.cost.per_1000_usd)]];
     return `<div class="card"><h2>Стоимость обработки</h2>
-      <div class="tiles">${t.map(([k, v]) => `<div class="tile"><div class="k">${k}</div><div class="v" style="font-size:22px">${v}</div></div>`).join("")}</div>
+      <div class="tiles">${t.map(([k, v]) => `<div class="tile"><div class="k">${k}</div><div class="v fs-22">${v}</div></div>`).join("")}</div>
       <p class="small muted">Последняя оценка каждого диалога: ${c.evaluations} (ошибок ${c.errors}). Всего ${c.tokens.total.toLocaleString("ru")} токенов,
         ${fmtUsd(c.cost.total_usd)}${c.cost.usd_per_1m_tokens != null ? ` (${fmtUsd(c.cost.usd_per_1m_tokens)} за 1M токенов)` : ""}.
         ${c.cost.unpriced ? `Без стоимости: ${c.cost.unpriced} — оценщик не вернул usage, модели нет в тарифах.` : ""}</p>

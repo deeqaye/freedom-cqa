@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { icon } from "./icons.js";
 
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -60,7 +61,7 @@ export const optionsHtml = (opts, selected) =>
 let toastTimer;
 export function toast(msg, isErr = false) {
   const el = document.getElementById("toast");
-  el.textContent = msg;
+  el.innerHTML = `${icon(isErr ? "alert" : "check", 18)}<span>${esc(msg)}</span>`;
   el.className = "toast show" + (isErr ? " err" : "");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.className = "toast"; }, isErr ? 6000 : 3000);
@@ -77,6 +78,7 @@ export function modal(html, onMount) {
   });
   document.body.appendChild(bg);
   onMount && onMount(bg.querySelector(".modal"), close);
+  bg.querySelector(".modal input:not([type=checkbox]), .modal select, .modal textarea, .modal button:not([data-close])")?.focus();
   return close;
 }
 
@@ -97,7 +99,7 @@ export async function runBatch(el, body) {
     lbl.textContent = `${done} / ${ids.length}` + (p.error ? ` · ошибок: ${p.error}` : "");
     if (done >= ids.length) {
       const cost = await api.get(`/api/stats/cost?ids=${ids.join(",")}`).catch(() => null);
-      if (cost) el.insertAdjacentHTML("beforeend", `<div class="small muted" style="margin-top:6px">${costLine(cost)}</div>`);
+      if (cost) el.insertAdjacentHTML("beforeend", `<div class="small muted mt-1">${costLine(cost)}</div>`);
       return { ...p, cost };
     }
   }
@@ -141,4 +143,22 @@ export function attachTips(root) {
     tip.style.top = e.clientY + 14 + "px";
   });
   root.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+}
+
+/** Current value of a CSS custom property (theme-aware colors for canvas drawing). */
+export const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+/** Shimmer placeholders while data loads: "page" | "table" | "card" | "tiles". */
+export function skeleton(kind = "page", n = 8) {
+  const line = (w, h = 12) => `<span class="skel" style="width:${w};height:${h}px"></span>`;
+  const table = `<div class="skel-table">${Array.from({ length: n }, (_, i) =>
+    `<div class="skel-row">${line("14%")}${line("10%")}${line("6%")}${line(`${18 + (i % 3) * 6}%`)}${line("8%")}</div>`).join("")}</div>`;
+  const tiles = `<div class="tiles">${Array.from({ length: 4 }, () => `<div class="card tile">${line("50%", 10)}${line("40%", 26)}</div>`).join("")}</div>`;
+  const card = `<div class="skel-card"><span class="skel skel-ring"></span><div class="skel-lines">${line("90%")}${line("75%")}${line("82%")}${line("60%")}</div></div>`;
+  if (kind === "table") return table;
+  if (kind === "tiles") return tiles;
+  if (kind === "card") return card;
+  return `<div class="skel-page" aria-busy="true" aria-label="Загрузка">
+    <div class="page-head"><div>${line("220px", 26)}<div class="mt-2">${line("320px", 14)}</div></div></div>
+    <div class="card">${table}</div></div>`;
 }

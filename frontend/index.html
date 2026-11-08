@@ -4,24 +4,36 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CQA — Анализ качества диалогов</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/app.css">
   <script>
+    // Theme + sidebar state before first paint (no flash). Storage may be blocked: fall back to defaults.
+    (function () {
+      var t, s, d = document.documentElement;
+      try { t = localStorage.getItem("cqa.theme"); s = localStorage.getItem("cqa.side"); } catch (e) {}
+      if (t !== "dark" && t !== "light") t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      d.dataset.theme = t;
+      if (s === "collapsed" || (s !== "expanded" && innerWidth <= 1100)) d.classList.add("side-collapsed");
+    })();
     // Deployment config. For a Dynamics 365 web resource, set apiBase to the service URL.
     window.CQA_CONFIG = Object.assign({ apiBase: "" }, window.CQA_CONFIG || {});
   </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
+  <header class="topbar">
+    <button class="icon-btn" data-drawer aria-label="Открыть меню" aria-controls="sidebar" aria-expanded="false"><span data-icon="menu"></span></button>
+    <a class="brand" href="#/conversations"><span class="logo">C</span>CQA</a>
+  </header>
   <div class="layout">
-    <aside class="sidebar">
-      <a class="brand" href="#/conversations">CQA</a>
-      <nav>
-        <a href="#/conversations" data-nav="conversations"><span class="ico">💬</span>Диалоги</a>
-        <a href="#/checklists" data-nav="checklists"><span class="ico">☑</span>Чек-листы</a>
-        <a href="#/appeals" data-nav="appeals"><span class="ico">⚖</span>Апелляции <b class="badge" id="appeals-badge" hidden></b></a>
-        <a href="#/analytics" data-nav="analytics"><span class="ico">📊</span>Аналитика</a>
-        <a href="#/help" data-nav="help"><span class="ico">ℹ</span>Справочник</a>
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#/conversations" title="CQA — Анализ качества диалогов"><span class="logo">C</span><span class="lbl">CQA</span></a>
+      <nav aria-label="Разделы">
+        <a href="#/conversations" data-nav="conversations" title="Диалоги"><span class="ico" data-icon="chat"></span><span class="lbl">Диалоги</span></a>
+        <a href="#/checklists" data-nav="checklists" title="Чек-листы"><span class="ico" data-icon="checklist"></span><span class="lbl">Чек-листы</span></a>
+        <a href="#/appeals" data-nav="appeals" title="Апелляции"><span class="ico" data-icon="scale"></span><span class="lbl">Апелляции</span> <b class="badge" id="appeals-badge" hidden></b></a>
+        <a href="#/analytics" data-nav="analytics" title="Аналитика"><span class="ico" data-icon="chart"></span><span class="lbl">Аналитика</span></a>
+        <a href="#/help" data-nav="help" title="Справочник"><span class="ico" data-icon="info"></span><span class="lbl">Справочник</span></a>
       </nav>
       <div class="role">
         <label for="role">Роль (демо)</label>
@@ -33,7 +45,13 @@
         <a href="#/help" class="small role-help">Что может эта роль?</a>
         <small id="evaluator-info"></small>
       </div>
+      <button class="role-mini" data-role-mini title="Роль — развернуть меню" aria-label="Роль: развернуть меню"></button>
+      <div class="side-foot">
+        <button class="side-btn" data-theme-toggle title="Сменить тему"><span class="ico" data-icon="moon"></span><span class="lbl" data-theme-label>Тёмная тема</span></button>
+        <button class="side-btn collapse-btn" data-collapse title="Свернуть меню" aria-label="Свернуть меню"><span class="ico" data-icon="collapse"></span><span class="lbl">Свернуть</span></button>
+      </div>
     </aside>
+    <div class="scrim" data-scrim></div>
     <main id="view" class="view" tabindex="-1"></main>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
