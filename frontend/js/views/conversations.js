@@ -47,6 +47,8 @@ export async function mount(el) {
         <button class="btn" data-eval-all>Оценить набор</button>
       </div>
       <div data-progress></div>
+      <div class="small muted sel-hint">Выбор: флажок · <kbd>Shift</kbd>+клик — диапазон · зажмите и протяните мышью по строкам ·
+        <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+клик — отметить строку · <kbd>Esc</kbd> — снять выбор</div>
       <div class="tbl-wrap">
         <table class="tbl">
           <thead><tr><th class="check"><input type="checkbox" data-all aria-label="Выбрать все"></th>${COLS.map(([k, label, , cls]) =>
@@ -100,26 +102,43 @@ export async function mount(el) {
       && (!q || r.id.toLowerCase().includes(q) || (r.operator_name || "").toLowerCase().includes(q))));
   }
 
+  // "N диалогов · оценено M · средний балл X" for a set of rows (average over scored ones)
+  const summary = list => {
+    const ok = list.filter(r => r.evaluation && r.evaluation.status === "ok");
+    const sc = ok.map(r => r.evaluation.final_score).filter(x => x != null);
+    const avg = sc.length ? sc.reduce((a, b) => a + b, 0) / sc.length : null;
+    return `${list.length} диалогов · оценено ${ok.length}` + (avg != null ? ` · средний балл ${fmtNum(avg)}` : "");
+  };
+
+  /** Selection-only repaint (cheap; used while drag-selecting): checkboxes, row highlight, summary, buttons. */
+  function syncSel() {
+    const vis = visible();
+    const sel = rows.filter(r => selected.has(r.id));
+    el.querySelector("[data-count]").innerHTML = `<span>${summary(vis)}</span>`
+      + (sel.length ? `<span class="sel-summary">Выбрано: ${summary(sel)} <button class="linkish" data-clear-sel>снять выбор</button></span>` : "");
+    tbody.querySelectorAll("tr[data-id]").forEach(tr => {
+      const on = selected.has(tr.dataset.id);
+      tr.classList.toggle("picked", on);
+      tr.setAttribute("aria-selected", String(on));
+      tr.querySelector("[data-sel]").checked = on;
+    });
+    const all = el.querySelector("[data-all]"), n = vis.filter(r => selected.has(r.id)).length;
+    all.checked = vis.length > 0 && n === vis.length;
+    all.indeterminate = n > 0 && n < vis.length;
+    el.querySelector("[data-eval-sel]").disabled = !selected.size;
+    el.querySelector("[data-eval-sel]").textContent = selected.size ? `Оценить выбранные (${selected.size})` : "Оценить выбранные";
+  }
+
   function draw() {
     drawSortHeads();
     const vis = visible();
-    // "N диалогов · оценено M · средний балл X" for a set of rows (average over scored ones)
-    const summary = list => {
-      const ok = list.filter(r => r.evaluation && r.evaluation.status === "ok");
-      const sc = ok.map(r => r.evaluation.final_score).filter(x => x != null);
-      const avg = sc.length ? sc.reduce((a, b) => a + b, 0) / sc.length : null;
-      return `${list.length} диалогов · оценено ${ok.length}` + (avg != null ? ` · средний балл ${fmtNum(avg)}` : "");
-    };
-    const sel = rows.filter(r => selected.has(r.id));
-    el.querySelector("[data-count]").innerHTML = `<span>${summary(vis)}</span>`
-      + (sel.length ? `<span class="sel-summary">Выбрано: ${summary(sel)}</span>` : "");
     tbody.innerHTML = vis.map(r => {
       const e = r.evaluation;
       const st = e ? STATUS[e.status] : ["na", "Не оценён"];
       const changed = e && e.final_score !== e.original_score;
       const ok = e && e.status === "ok";
       return `<tr class="click ${selected.has(r.id) ? "picked" : ""}" data-id="${esc(r.id)}">
-        <td class="check" onclick="event.stopPropagation()"><input type="checkbox" data-sel="${esc(r.id)}" ${selected.has(r.id) ? "checked" : ""}></td>
+        <td class="check"><input type="checkbox" data-sel="${esc(r.id)}" aria-label="Выбрать ${esc(r.id)}" ${selected.has(r.id) ? "checked" : ""}></td>
         <td><span class="id">${esc(r.id)}</span></td>
         <td><span class="cell-ch">${icon(r.channel === "voice call" || r.has_audio ? "phone" : "chat", 15)}${esc(CHANNEL[r.channel] || r.channel)}</span></td>
         <td>${esc(r.language)}</td>
@@ -134,8 +153,7 @@ export async function mount(el) {
         <h2>${rows.length ? "Ничего не найдено" : "Нет диалогов"}</h2>
         <p>${rows.length ? "Измените фильтры или строку поиска." : "Загрузите набор по group_id, ссылке или файлу JSON."}</p>
         ${rows.length ? "" : `<button class="btn" data-load-empty>${icon("upload", 16)}Загрузить набор</button>`}</div></td></tr>`;
-    el.querySelector("[data-eval-sel]").disabled = !selected.size;
-    el.querySelector("[data-eval-sel]").textContent = selected.size ? `Оценить выбранные (${selected.size})` : "Оценить выбранные";
+    syncSel();
   }
 
   el.addEventListener("input", e => {
@@ -146,9 +164,84 @@ export async function mount(el) {
       draw();
     }
   });
+  // ---- selection: checkbox, Shift+click (range from the last clicked row), Ctrl/⌘+click (toggle a row),
+  // press and drag across rows (like file managers / mail). Mouse only; touch and keyboard use the plain checkbox.
+  let anchor = null;          // last clicked row: start of a Shift range
+  let drag = null;            // { start, on, base: Set, moved }
+  let suppressClick = false;  // the click that ends a selection gesture must not open the card
+  const table = tbody.closest("table");
+  const order = () => [...tbody.querySelectorAll("tr[data-id]")].map(tr => tr.dataset.id);
+  /** Set rows between two ids (visible order, inclusive) to `on`, on top of `base`. */
+  function applyRange(fromId, toId, on, base = new Set(selected)) {
+    const ids = order();
+    let a = ids.indexOf(fromId), b = ids.indexOf(toId);
+    if (a < 0) a = b;
+    if (a > b) [a, b] = [b, a];
+    selected.clear();
+    base.forEach(id => selected.add(id));
+    ids.slice(a, b + 1).forEach(id => (on ? selected.add(id) : selected.delete(id)));
+  }
+
+  let lastWasTouch = false;
+  tbody.addEventListener("pointerdown", e => {
+    suppressClick = false;
+    lastWasTouch = e.pointerType === "touch";
+    if (e.button !== 0 || e.pointerType === "touch") return;
+    const tr = e.target.closest("tr[data-id]");
+    if (!tr) return;
+    e.preventDefault();  // no text selection while gesturing
+    const id = tr.dataset.id, inCheck = !!e.target.closest("td.check");
+    if (e.shiftKey && anchor && order().includes(anchor)) {
+      applyRange(anchor, id, !selected.has(id));
+      suppressClick = true;
+      return syncSel();
+    }
+    const base = new Set(selected), on = !selected.has(id);
+    if (inCheck || e.metaKey || e.ctrlKey) {
+      applyRange(id, id, on, base);
+      anchor = id;
+      suppressClick = true;
+      syncSel();
+    }
+    // any press may turn into a drag-select once the pointer reaches another row
+    drag = { start: id, on, base, moved: false };
+  });
+  tbody.addEventListener("pointerover", e => {
+    if (!drag) return;
+    const tr = e.target.closest("tr[data-id]");
+    if (!tr || (!drag.moved && tr.dataset.id === drag.start)) return;
+    drag.moved = true;
+    table.classList.add("dragging");
+    applyRange(drag.start, tr.dataset.id, drag.on, drag.base);
+    anchor = drag.start;
+    syncSel();
+  });
+  const endDrag = () => {
+    if (!drag) return;
+    if (drag.moved) suppressClick = true;
+    drag = null;
+    table.classList.remove("dragging");
+  };
+  const onKey = e => {
+    if (e.key !== "Escape" || !selected.size || document.querySelector(".modal-bg")) return;
+    if (e.target.closest && e.target.closest("input, select, textarea")) return;
+    selected.clear();
+    syncSel();
+  };
+  addEventListener("pointerup", endDrag);
+  addEventListener("pointercancel", endDrag);
+  addEventListener("keydown", onKey);
+
+  el.addEventListener("click", e => {
+    if (e.target.closest("[data-clear-sel]")) { selected.clear(); syncSel(); }
+  });
   el.addEventListener("change", e => {
-    if (e.target.dataset.sel) { e.target.checked ? selected.add(e.target.dataset.sel) : selected.delete(e.target.dataset.sel); draw(); }
-    if (e.target.matches("[data-all]")) { visible().forEach(r => e.target.checked ? selected.add(r.id) : selected.delete(r.id)); draw(); }
+    if (e.target.dataset.sel) {  // keyboard (Space) and touch toggles; mouse is handled on pointerdown
+      e.target.checked ? selected.add(e.target.dataset.sel) : selected.delete(e.target.dataset.sel);
+      anchor = e.target.dataset.sel;
+      syncSel();
+    }
+    if (e.target.matches("[data-all]")) { visible().forEach(r => e.target.checked ? selected.add(r.id) : selected.delete(r.id)); syncSel(); }
   });
   el.querySelector("thead").addEventListener("click", e => {
     const th = e.target.closest("th[data-sort]");
@@ -164,6 +257,9 @@ export async function mount(el) {
   });
   tbody.addEventListener("click", e => {
     if (e.target.closest("[data-load-empty]")) return el.querySelector("[data-load]").click();
+    // mouse clicks on the checkbox were applied on pointerdown: cancel the native toggle (keyboard: e.detail === 0)
+    if (e.target.closest("td.check")) { if (e.detail !== 0 && e.target.matches("[data-sel]") && !lastWasTouch) e.preventDefault(); return; }
+    if (suppressClick) { suppressClick = false; return; }
     const tr = e.target.closest("tr[data-id]");
     if (tr) location.hash = `#/c/${encodeURIComponent(tr.dataset.id)}`;
   });
@@ -198,6 +294,7 @@ export async function mount(el) {
   });
 
   await load();
+  return { unmount() { removeEventListener("pointerup", endDrag); removeEventListener("pointercancel", endDrag); removeEventListener("keydown", onKey); } };
 }
 
 /** Dataset loader: by group_id (server's ORG_API_URL), by full GET link, or by JSON file. */
