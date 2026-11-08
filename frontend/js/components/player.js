@@ -2,6 +2,7 @@
 // Bar HEIGHT is the real loudness of the recording (RMS per 0.1 s), so indicators match what you hear.
 // The transcript only COLOURS bars by speaker (mono audio, approximate timestamps); see align.js.
 import { fmtTime } from "../ui.js";
+import { t, tf } from "../i18n.js";
 import { BIN, align, buildTimeline, loudness, utterDur } from "./align.js";
 
 // Each lane shows sound only where its own speaker talks. "other" = IVR bot + sound no transcript line
@@ -25,7 +26,7 @@ export function createPlayer(root, { src, transcript }) {
 
   root.innerHTML = `
     <div class="lanes">
-      ${LANES.map(([k, l]) => `<div class="lane-label${k === "other" ? " small muted" : ""}">${l}</div><canvas data-lane="${k}" aria-label="Дорожка: ${l}"${k === "other" ? ' style="height:30px"' : ""}></canvas>`).join("")}
+      ${LANES.map(([k, l]) => `<div class="lane-label${k === "other" ? " small muted" : ""}">${l}</div><canvas data-lane="${k}" aria-label="${tf("Дорожка: {name}", { name: t(l) })}"${k === "other" ? ' style="height:30px"' : ""}></canvas>`).join("")}
     </div>
     <div class="controls">
       <button class="play" data-play aria-label="Воспроизвести">▶</button>
@@ -108,7 +109,7 @@ export function createPlayer(root, { src, transcript }) {
       } catch { /* waveform optional; playback still works */ }
       draw();
     } catch (e) {
-      $("[data-status]").textContent = `Запись недоступна: ${e.message}`;
+      $("[data-status]").textContent = tf("Запись недоступна: {err}", { err: e.message });
     }
   }
 
@@ -151,7 +152,7 @@ export function createPlayer(root, { src, transcript }) {
       if (fromMsg.t == null) return;
       const a = span(fromMsg)[0], b = span(toMsg || fromMsg)[1];
       if (b <= 0) {
-        $("[data-status]").textContent = `Реплика #${fromMsg.turn} прозвучала до начала записи — в аудио её нет.`;
+        $("[data-status]").textContent = tf("Реплика #{n} прозвучала до начала записи — в аудио её нет.", { n: fromMsg.turn });
         return;
       }
       region = [Math.max(0, a - 1.5), b + 1];

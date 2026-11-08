@@ -1,10 +1,11 @@
 import { api, getRole } from "../api.js";
+import { locale, rationaleOf, t, tf } from "../i18n.js";
 import { SPEAKER, esc, fmtNum, fmtTs, fmtValue, modal, optionsHtml, toast, valueOptions } from "../ui.js";
 
 const ST = { open: ["warn", "На рассмотрении"], accepted: ["good", "Принята"], rejected: ["na", "Отклонена"] };
 const EVENT = { created: ["warn", "Подана"], accepted: ["good", "Принята"], rejected: ["na", "Отклонена"] };
 const ROLE = { operator: "Оператор", lead: "Главный специалист", admin: "Администратор" };
-const fmtDate = d => new Date(d).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const fmtDate = d => new Date(d).toLocaleString(locale(), { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 export async function mount(el, { id }) {
   let filter = "open", list = [];
@@ -24,14 +25,14 @@ export async function mount(el, { id }) {
     const h = await api.get("/api/appeals/history");
     const canClear = ["admin", "lead"].includes(getRole());
     const change = e => {
-      if (e.action === "created") return e.new_value != null ? `${esc(fmtValue(e.old_value))} → предлагает <b>${esc(fmtValue(e.new_value))}</b>` : `оспорено: ${esc(fmtValue(e.old_value))}`;
-      if (e.action === "accepted") return `${esc(fmtValue(e.old_value))} → <b>${esc(fmtValue(e.new_value))}</b>`;
+      if (e.action === "created") return e.new_value != null ? tf("{old} → предлагает <b>{new}</b>", { old: esc(t(fmtValue(e.old_value))), new: esc(t(fmtValue(e.new_value))) }) : tf("оспорено: {v}", { v: esc(t(fmtValue(e.old_value))) });
+      if (e.action === "accepted") return `${esc(t(fmtValue(e.old_value)))} → <b>${esc(t(fmtValue(e.new_value)))}</b>`;
       return `<span class="muted">без изменений</span>`;
     };
     const score = e => (e.score_before == null || e.score_before === e.score_after ? "" : `${fmtNum(e.score_before)} → <b>${fmtNum(e.score_after)}</b>`);
     histEl.innerHTML = `
       <div class="row"><h2 style="margin:0">История апелляций</h2>
-        <span class="muted small">${h.total} ${h.total === 1 ? "событие" : "событий"}${h.total > h.events.length ? ` · показаны последние ${h.events.length}` : ""}</span>
+        <span class="muted small">${tf(h.total === 1 ? "{n} событие" : "{n} событий", { n: h.total })}${h.total > h.events.length ? tf(" · показаны последние {n}", { n: h.events.length }) : ""}</span>
         <span class="spacer"></span>
         ${canClear ? `<button class="btn danger sm" data-clear ${h.total ? "" : "disabled"}>Очистить историю</button>` : ""}</div>
       ${h.events.length ? `<div class="hist-wrap" style="margin-top:12px"><table class="tbl"><thead><tr>
@@ -45,11 +46,11 @@ export async function mount(el, { id }) {
             <td>${esc(ROLE[e.role] || e.role)}</td>
             <td class="small">${change(e)}</td>
             <td class="num small">${score(e)}</td>
-            <td class="small">${esc(e.comment || "")}</td></tr>`).join("")}</tbody></table></div>`
+            <td class="small" data-raw>${esc(e.comment || "")}</td></tr>`).join("")}</tbody></table></div>`
         : `<div class="empty">История пуста. Здесь появятся поданные апелляции и решения по ним.</div>`}`;
     histEl.querySelector("[data-clear]")?.addEventListener("click", () => modal(`
       <h2>Очистить историю апелляций?</h2>
-      <p>Будут удалены все ${h.total} записей журнала. Сами апелляции, их статусы и изменённые баллы <b>сохранятся</b>.</p>
+      <p>${tf("Будут удалены все {n} записей журнала. Сами апелляции, их статусы и изменённые баллы <b>сохранятся</b>.", { n: h.total })}</p>
       <label class="row small"><input type="checkbox" data-ok> Я понимаю, что журнал нельзя восстановить</label>
       <div class="row"><span class="spacer"></span><button class="btn ghost" data-close>Отмена</button><button class="btn danger" data-go disabled>Очистить</button></div>`,
     (m, close) => {
@@ -59,7 +60,7 @@ export async function mount(el, { id }) {
         try {
           const r = await api.del("/api/appeals/history");
           close();
-          toast(`История очищена: удалено записей — ${r.deleted}`);
+          toast(tf("История очищена: удалено записей — {n}", { n: r.deleted }));
           await loadHistory();
         } catch (err) { toast(err.message, true); e.target.disabled = false; }
       };
@@ -88,8 +89,8 @@ export async function mount(el, { id }) {
     listEl.innerHTML = list.map(a => `
       <div class="ap-item ${a.id === id ? "active" : ""}" data-id="${a.id}">
         <div class="row"><b>${esc(a.conversation_id)}</b><span class="spacer"></span><span class="chip ${ST[a.status][0]}">${ST[a.status][1]}</span></div>
-        <div>${esc(a.criterion_title)} · <span class="muted">${esc(fmtValue(a.original_value, a))}</span></div>
-        <div class="small muted">${esc(a.comment.slice(0, 90))}</div>
+        <div>${esc(t(a.criterion_title))} · <span class="muted">${esc(t(fmtValue(a.original_value, a)))}</span></div>
+        <div class="small muted" data-raw>${esc(a.comment.slice(0, 90))}</div>
       </div>`).join("") || `<div class="empty">Нет апелляций</div>`;
   }
 
@@ -101,18 +102,18 @@ export async function mount(el, { id }) {
     const crit = { type: a.criterion_type, steps: a.steps, na_allowed: a.na_allowed };
     detEl.innerHTML = `
       <div class="row"><h2 style="margin:0">${esc(a.criterion_title)}</h2><span class="spacer"></span><span class="chip ${ST[a.status][0]}">${ST[a.status][1]}</span></div>
-      <p class="small muted">Диалог <a href="#/c/${encodeURIComponent(a.conversation_id)}">${esc(a.conversation_id)}</a> · оценка #${a.evaluation_id} · подал: ${esc(a.author_role)}</p>
+      <p class="small muted">${t("Диалог")} <a href="#/c/${encodeURIComponent(a.conversation_id)}">${esc(a.conversation_id)}</a> · ${tf("оценка #{id}", { id: a.evaluation_id })} · ${esc(tf("подал: {role}", { role: t(ROLE[a.author_role] || a.author_role) }))}</p>
       <div class="grid2" style="gap:12px">
         <div><h3>Спорная оценка</h3>
-          <p><b>${esc(fmtValue(a.original_value, crit))}</b> <span class="muted">(вес ${fmtNum(a.weight)})</span></p>
-          <p class="small">${esc(a.rationale)}</p></div>
-        <div><h3>Комментарий оператора</h3><div class="quote">${esc(a.comment)}</div>
+          <p><b>${esc(fmtValue(a.original_value, crit))}</b> <span class="muted">${tf("(вес {w})", { w: fmtNum(a.weight) })}</span></p>
+          <p class="small" data-raw>${esc(rationaleOf(a))}</p></div>
+        <div><h3>Комментарий оператора</h3><div class="quote" data-raw>${esc(a.comment)}</div>
           ${a.suggested_value !== null && a.suggested_value !== undefined ? `<p class="small">Предлагает: <b>${esc(fmtValue(a.suggested_value, crit))}</b></p>` : ""}</div>
       </div>
       <h3 style="margin-top:12px">Фрагмент диалога</h3>
       <div class="excerpt">${(a.excerpt || []).map(m => `
         <div class="msg ${m.speaker} ${(a.evidence_turns || []).includes(m.turn) ? "evidence" : ""}"><div class="turn">#${m.turn}</div>
-          <div><div class="meta"><span class="ts">${esc(fmtTs(m))}</span><span class="who">${esc(SPEAKER[m.speaker])}</span></div><div class="text">${esc(m.text)}</div></div></div>`).join("")}
+          <div><div class="meta"><span class="ts">${esc(fmtTs(m))}</span><span class="who">${esc(SPEAKER[m.speaker])}</span></div><div class="text" data-raw>${esc(m.text)}</div></div></div>`).join("")}
       </div>
       <p><a href="#/c/${encodeURIComponent(a.conversation_id)}">Открыть карточку целиком →</a></p>
       ${a.status === "open" ? (canDecide ? `
@@ -125,10 +126,10 @@ export async function mount(el, { id }) {
           <div class="row"><span class="spacer"></span><button class="btn" data-save>Сохранить решение</button></div>
         </div>` : `<div class="alert info">Решение принимает главный специалист или администратор — переключите роль слева.</div>`)
         : `<h3>Решение</h3>
-          <p>${a.status === "accepted" ? `Оценка изменена: <b>${esc(fmtValue(a.original_value, crit))} → ${esc(fmtValue(a.new_value, crit))}</b>` : "Исходная оценка подтверждена"}
-            <span class="muted">· ${esc(a.reviewer_role)} · ${new Date(a.decided_at).toLocaleString("ru-RU")}</span></p>
-          <div class="quote">${esc(a.reviewer_comment)}</div>
-          ${a.improvement ? `<p class="small"><b>Что доработать:</b> ${esc(a.improvement)}</p>` : ""}
+          <p>${a.status === "accepted" ? `Оценка изменена: <b>${esc(t(fmtValue(a.original_value, crit)))} → ${esc(t(fmtValue(a.new_value, crit)))}</b>` : "Исходная оценка подтверждена"}
+            <span class="muted">· ${esc(t(ROLE[a.reviewer_role] || a.reviewer_role))} · ${esc(fmtDate(a.decided_at))}</span></p>
+          <div class="quote" data-raw>${esc(a.reviewer_comment)}</div>
+          ${a.improvement ? `<p class="small"><b>Что доработать:</b> <span data-raw>${esc(a.improvement)}</span></p>` : ""}
           <p>Итог диалога: исходный <b>${fmtNum(a.score_before)}</b> → финальный <b>${fmtNum(a.score_after)}</b></p>`}`;
 
     let decision = "reject";
@@ -148,7 +149,7 @@ export async function mount(el, { id }) {
       save.disabled = true;
       try {
         const r = await api.post(`/api/appeals/${a.id}/decision`, body);
-        toast(`Решение сохранено. Итог: ${fmtNum(r.score_before)} → ${fmtNum(r.score_after)}`);
+        toast(tf("Решение сохранено. Итог: {a} → {b}", { a: fmtNum(r.score_before), b: fmtNum(r.score_after) }));
         dispatchEvent(new Event("cqa:appeals"));
         await loadList();
         await showDetail(a.id);

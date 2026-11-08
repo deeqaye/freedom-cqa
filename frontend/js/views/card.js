@@ -1,5 +1,6 @@
 import { api, getRole } from "../api.js";
 import { createPlayer } from "../components/player.js";
+import { locale, rationaleOf, t, tf } from "../i18n.js";
 import {
   CHANNEL, LANG, MARK, SPEAKER, esc, fmtNum, fmtTime, fmtTs, fmtValue, modal, optionsHtml, scoreTone, toast, tone, valueOptions, fmtDur, fmtUsd,
 } from "../ui.js";
@@ -21,8 +22,8 @@ export async function mount(el, { id }) {
       <div>
         <a href="#/conversations" class="small">← Все диалоги</a>
         <h1>Анализ разговора</h1>
-        <div class="sub">${esc(CHANNEL[conv.channel] || conv.channel)} ${esc(conv.id)} · ${esc(LANG[conv.language] || conv.language)} · ${esc(dur)}
-          ${conv.operator_name ? ` · Оператор: ${esc(conv.operator_name)}` : ""}</div>
+        <div class="sub">${esc(t(CHANNEL[conv.channel] || conv.channel))} ${esc(conv.id)} · ${esc(t(LANG[conv.language] || conv.language))} · ${esc(dur)}
+          ${conv.operator_name ? ` · ${esc(tf("Оператор: {name}", { name: conv.operator_name }))}` : ""}</div>
       </div>
       <div class="row" data-head-actions></div>
     </div>
@@ -37,7 +38,7 @@ export async function mount(el, { id }) {
               <div>
                 <div class="meta"><span class="ts ${isCall ? "seek" : ""}" ${isCall ? `data-seek="${m.turn}" title="Слушать с этого места"` : ""}>${esc(fmtTs(m))}</span>
                   <span class="who">${esc(SPEAKER[m.speaker] || m.speaker)}</span></div>
-                <div class="text">${esc(m.text)}</div>
+                <div class="text" data-raw>${esc(m.text)}</div>
               </div>
             </div>`).join("")}
         </div>
@@ -115,10 +116,10 @@ export async function mount(el, { id }) {
 
     scoreEl.innerHTML = `${cmp}
       <div class="row"><h2 style="margin:0">Оценка качества</h2><span class="spacer"></span>
-        <span class="small muted">${esc(ev.checklist.name)} v${ev.checklist.version} · ${esc(ev.model.name || ev.evaluator)}${usageText(ev)}</span></div>
+        <span class="small muted"><span>${esc(ev.checklist.name)}</span> v${ev.checklist.version} · ${esc(ev.model.name || ev.evaluator)}${usageText(ev)}</span></div>
       ${ev.critical_flag ? `<div class="alert bad" style="margin-top:10px">⚠ Выявлена грубая ошибка — отмечено отдельно, итог не обнуляется</div>` : ""}
       <div class="score-head" style="margin-top:12px">
-        <div class="ring" role="img" aria-label="Итоговый балл ${fmtNum(s)} из 100">
+        <div class="ring" role="img" aria-label="${esc(tf("Итоговый балл {s} из 100", { s: fmtNum(s) }))}">
           <svg width="160" height="160"><circle cx="80" cy="80" r="70" fill="none" stroke="#e8ede9" stroke-width="12"/>
             <circle cx="80" cy="80" r="70" fill="none" stroke="${ringColor}" stroke-width="12" stroke-linecap="round"
               stroke-dasharray="${C * frac} ${C}"/></svg>
@@ -126,11 +127,11 @@ export async function mount(el, { id }) {
         </div>
         <div class="sections">
           ${sections.map(([name, v]) => `<div><span>${esc(name)}</span><b>${fmtNum(v.earned)} <span class="muted">/ ${fmtNum(v.max)}</span></b></div>`).join("")}
-          ${changed ? `<p class="change">Исходная оценка ${fmtNum(ev.original_score)} → после апелляции ${fmtNum(ev.final_score)}</p>` : ""}
+          ${changed ? `<p class="change">${tf("Исходная оценка {a} → после апелляции {b}", { a: fmtNum(ev.original_score), b: fmtNum(ev.final_score) })}</p>` : ""}
         </div>
       </div>
       ${lost.length ? `<h3 style="margin-top:14px">Почему снижена оценка</h3>
-        <ul class="why">${lost.map(c => `<li><b>${esc(c.title)}</b> — ${esc(c.rationale)}</li>`).join("")}</ul>` : ""}
+        <ul class="why">${lost.map(c => `<li><b>${esc(c.title)}</b> — <span data-raw>${esc(rationaleOf(c))}</span></li>`).join("")}</ul>` : ""}
       <h3 style="margin-top:14px">Критерии</h3>
       ${ev.criteria.map(c => critRow(c, apBy[c.criterion_id] || [])).join("")}
       <p class="small muted" style="margin-top:12px">Вес N/A-критериев перераспределён между применимыми. Баллы — после перераспределения.</p>`;
@@ -148,26 +149,26 @@ export async function mount(el, { id }) {
   }
 
   function critRow(c, aps) {
-    const t = tone(c);
+    const tn = tone(c);
     const valChanged = JSON.stringify(c.final_value) !== JSON.stringify(c.original_value);
     const pts = c.type === "flag" ? `<span class="chip ${c.final_value ? "bad" : "good"}">${c.final_value ? "Выявлено" : "Нет"}</span>`
       : c.points == null ? `<span class="chip na">N/A</span>`
-        : `<span class="pts"><b class="${t}">${fmtNum(c.points)}</b> <span class="muted">/ ${fmtNum(c.effective_weight)}</span></span>`;
+        : `<span class="pts"><b class="${tn}">${fmtNum(c.points)}</b> <span class="muted">/ ${fmtNum(c.effective_weight)}</span></span>`;
     const lastAp = aps[0];
     return `<details class="crit" data-crit="${esc(c.criterion_id)}">
-      <summary><span class="mark ${t}" aria-hidden="true">${MARK[t]}</span>
+      <summary><span class="mark ${tn}" aria-hidden="true">${MARK[tn]}</span>
         <span>${esc(c.title)} ${lastAp ? `<span class="chip ${AP_STATUS[lastAp.status][0]}">${AP_STATUS[lastAp.status][1]}</span>` : ""}</span>${pts}</summary>
       <div class="body">
-        <div class="row small"><span>Ответ: <b>${esc(fmtValue(c.final_value, c))}</b>${valChanged ? ` <span class="muted">(было: ${esc(fmtValue(c.original_value, c))})</span>` : ""}</span>
-          <span class="muted">Вес ${fmtNum(c.weight)}${c.type !== "flag" && c.points != null ? ` → ${fmtNum(c.effective_weight)} после перераспределения` : ""}</span></div>
-        <div>${esc(c.rationale)}</div>
-        ${c.value === null && c.na_reason ? `<div class="small"><b>Причина N/A:</b> ${esc(c.na_reason)}</div>` : ""}
+        <div class="row small"><span>Ответ: <b>${esc(fmtValue(c.final_value, c))}</b>${valChanged ? ` <span class="muted">${esc(tf("(было: {v})", { v: t(fmtValue(c.original_value, c)) }))}</span>` : ""}</span>
+          <span class="muted">${tf("Вес {w}", { w: fmtNum(c.weight) })}${c.type !== "flag" && c.points != null ? tf(" → {e} после перераспределения", { e: fmtNum(c.effective_weight) }) : ""}</span></div>
+        <div data-raw>${esc(rationaleOf(c))}</div>
+        ${c.value === null && c.na_reason ? `<div class="small"><b>Причина N/A:</b> <span data-raw>${esc(c.na_reason)}</span></div>` : ""}
         <div class="row small">Доказательство:
-          ${(c.evidence_turns || []).map(n => `<button class="ev" data-ev="${n}" title="${esc((byTurn[n] || {}).text || "")}">#${n} ${esc(SPEAKER[(byTurn[n] || {}).speaker] || "")}</button>`).join("")}
-          ${c.checked_turns ? `<span class="muted">· проверен участок #${c.checked_turns[0]}–#${c.checked_turns[1]}</span>` : ""}</div>
-        ${aps.map(a => `<div class="quote small"><b>${AP_STATUS[a.status][1]}</b> · ${esc(a.comment)}
-            ${a.status !== "open" ? `<br>Решение: ${esc(a.reviewer_comment)}${a.status === "accepted" ? ` (новое значение: ${esc(fmtValue(a.new_value, c))})` : ""}` : ""}
-            ${a.improvement ? `<br>Что доработать: ${esc(a.improvement)}` : ""}</div>`).join("")}
+          ${(c.evidence_turns || []).map(n => `<button class="ev" data-ev="${n}" data-raw-attrs title="${esc((byTurn[n] || {}).text || "")}">#${n} ${esc(t(SPEAKER[(byTurn[n] || {}).speaker] || ""))}</button>`).join("")}
+          ${c.checked_turns ? `<span class="muted">${tf("· проверен участок #{a}–#{b}", { a: c.checked_turns[0], b: c.checked_turns[1] })}</span>` : ""}</div>
+        ${aps.map(a => `<div class="quote small"><b>${AP_STATUS[a.status][1]}</b> · <span data-raw>${esc(a.comment)}</span>
+            ${a.status !== "open" ? `<br>${t("Решение:")} <span data-raw>${esc(a.reviewer_comment)}</span>${a.status === "accepted" ? esc(tf(" (новое значение: {v})", { v: t(fmtValue(a.new_value, c)) })) : ""}` : ""}
+            ${a.improvement ? `<br>${t("Что доработать:")} <span data-raw>${esc(a.improvement)}</span>` : ""}</div>`).join("")}
         <div class="row">
           <button class="btn sm" data-jump="${esc(c.criterion_id)}">Перейти к фрагменту</button>
           <button class="btn ghost sm" data-appeal="${esc(c.criterion_id)}" ${aps.some(a => a.status === "open") ? "disabled title='Уже на рассмотрении'" : ""}>Оспорить оценку</button>
@@ -192,17 +193,17 @@ export async function mount(el, { id }) {
     const crits = ev.criteria.filter(c => !open.has(c.criterion_id));
     modal(`
       <h2>Оспорить оценку</h2>
-      <label class="f">Критерий<select data-c>${crits.map(c => `<option value="${esc(c.criterion_id)}" ${c.criterion_id === cid ? "selected" : ""}>${esc(c.title)} — ${esc(fmtValue(c.final_value, c))}</option>`).join("")}</select></label>
+      <label class="f">Критерий<select data-c>${crits.map(c => `<option value="${esc(c.criterion_id)}" ${c.criterion_id === cid ? "selected" : ""}>${esc(t(c.title))} — ${esc(t(fmtValue(c.final_value, c)))}</option>`).join("")}</select></label>
       <div class="quote small" data-ctx></div>
       <label class="f">Предлагаемое значение (необязательно)<select data-v></select></label>
       <label class="f">Комментарий<textarea rows="4" data-comment placeholder="Почему вы не согласны с оценкой?"></textarea></label>
-      ${getRole() !== "operator" ? `<div class="alert info small">Подаёт оператор. Вы сейчас в роли «${getRole() === "admin" ? "Администратор" : "Главный специалист"}» — для демо это допустимо.</div>` : ""}
+      ${getRole() !== "operator" ? `<div class="alert info small">${esc(tf("Подаёт оператор. Вы сейчас в роли «{role}» — для демо это допустимо.", { role: t(getRole() === "admin" ? "Администратор" : "Главный специалист") }))}</div>` : ""}
       <div class="row"><span class="spacer"></span><button class="btn ghost" data-close>Отмена</button><button class="btn" data-send>Отправить</button></div>`,
     (m, close) => {
       const sel = m.querySelector("[data-c]");
       const sync = () => {
         const c = ev.criteria.find(x => x.criterion_id === sel.value);
-        m.querySelector("[data-ctx]").innerHTML = `${esc(c.rationale)}<br><span class="muted">Доказательство: ${(c.evidence_turns || []).map(n => `#${n}`).join(", ")}</span>`;
+        m.querySelector("[data-ctx]").innerHTML = `<span data-raw>${esc(rationaleOf(c))}</span><br><span class="muted">${esc(tf("Доказательство: {list}", { list: (c.evidence_turns || []).map(n => `#${n}`).join(", ") }))}</span>`;
         m.querySelector("[data-v]").innerHTML = `<option value="">— не указано —</option>` + optionsHtml(valueOptions(c).filter(([v]) => JSON.stringify(v) !== JSON.stringify(c.final_value)));
       };
       sel.onchange = sync; sync();
@@ -230,7 +231,7 @@ function usageText(ev) {
   const u = ev.usage || {}, parts = [];
   if (ev.duration_s != null) parts.push(fmtDur(ev.duration_s));
   if (u.input_tokens != null || u.output_tokens != null)
-    parts.push(`${(u.input_tokens || 0).toLocaleString("ru")} → ${(u.output_tokens || 0).toLocaleString("ru")} токенов`);
-  if (u.cost_usd != null) parts.push(fmtUsd(u.cost_usd) + (u.cost_source === "price_table" ? " (по тарифу)" : ""));
+    parts.push(tf("{in} → {out} токенов", { in: (u.input_tokens || 0).toLocaleString(locale()), out: (u.output_tokens || 0).toLocaleString(locale()) }));
+  if (u.cost_usd != null) parts.push(fmtUsd(u.cost_usd) + (u.cost_source === "price_table" ? " " + t("(по тарифу)") : ""));
   return parts.length ? " · " + parts.join(" · ") : "";
 }

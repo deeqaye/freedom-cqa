@@ -1,5 +1,6 @@
 import { api, getRole } from "../api.js";
 import { CHANNEL, esc, fmtNum, modal, costLine, runBatch, scoreTone, toast } from "../ui.js";
+import { t, tf } from "../i18n.js";
 
 // Sortable columns: key -> [header, value getter]. null values always go last.
 const STATUS_RANK = { ok: 0, error: 1, running: 2, queued: 3 };
@@ -36,11 +37,11 @@ export async function mount(el) {
     <div class="card stack">
       <div class="row">
         <select data-f="group"><option value="">Все наборы</option></select>
-        <select data-f="language"><option value="">Все языки</option><option>RU</option><option>KZ</option><option>EN</option></select>
+        <select data-f="language"><option value="">Все языки</option><option value="RU">RU</option><option value="KZ">KZ</option><option value="EN">EN</option></select>
         <select data-f="channel"><option value="">Все каналы</option><option value="agent chat">Чат</option><option value="voice call">Звонок</option></select>
         <input data-f="q" placeholder="Поиск по ID / оператору" style="width:200px">
         <span class="spacer"></span>
-        <select data-cl>${checklists.map(c => `<option value="${esc(c.id)}">${esc(c.name)} · v${c.active_version}</option>`).join("")}</select>
+        <select data-cl aria-label="Чек-лист">${checklists.map(c => `<option value="${esc(c.id)}">${esc(t(c.name))} · v${c.active_version}</option>`).join("")}</select>
         <button class="btn ghost" data-eval-sel disabled>Оценить выбранные</button>
         <button class="btn" data-eval-all>Оценить набор</button>
       </div>
@@ -62,7 +63,7 @@ export async function mount(el) {
     rows = await api.get("/api/conversations");
     const groups = [...new Set(rows.map(r => r.group_id))];
     const gs = el.querySelector('[data-f="group"]');
-    gs.innerHTML = `<option value="">Все наборы</option>` + groups.map(g => `<option>${esc(g)}</option>`).join("");
+    gs.innerHTML = `<option value="">Все наборы</option>` + groups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join("");
     for (const k of ["group", "language", "channel", "q"]) el.querySelector(`[data-f="${k}"]`).value = state[k];
     draw();
   }
@@ -105,7 +106,7 @@ export async function mount(el) {
     const ok = list.filter(r => r.evaluation && r.evaluation.status === "ok");
     const sc = ok.map(r => r.evaluation.final_score).filter(x => x != null);
     const avg = sc.length ? sc.reduce((a, b) => a + b, 0) / sc.length : null;
-    return `${list.length} диалогов · оценено ${ok.length}` + (avg != null ? ` · средний балл ${fmtNum(avg)}` : "");
+    return tf("{n} диалогов · оценено {m}", { n: list.length, m: ok.length }) + (avg != null ? tf(" · средний балл {avg}", { avg: fmtNum(avg) }) : "");
   };
 
   /** Selection-only repaint (no table rebuild; used while drag-selecting): checkboxes, row highlight, summary, buttons. */
@@ -113,7 +114,7 @@ export async function mount(el) {
     const vis = visible();
     const sel = rows.filter(r => selected.has(r.id));
     el.querySelector("[data-count]").innerHTML = `<span>${summary(vis)}</span>`
-      + (sel.length ? `<span class="sel-summary">Выбрано: ${summary(sel)} <button class="linkish" data-clear-sel>снять выбор</button></span>` : "");
+      + (sel.length ? `<span class="sel-summary">${tf("Выбрано: {s}", { s: summary(sel) })} <button class="linkish" data-clear-sel>снять выбор</button></span>` : "");
     tbody.querySelectorAll("tr[data-id]").forEach(tr => {
       const on = selected.has(tr.dataset.id);
       tr.classList.toggle("picked", on);
@@ -124,7 +125,7 @@ export async function mount(el) {
     all.checked = vis.length > 0 && n === vis.length;
     all.indeterminate = n > 0 && n < vis.length;
     el.querySelector("[data-eval-sel]").disabled = !selected.size;
-    el.querySelector("[data-eval-sel]").textContent = selected.size ? `Оценить выбранные (${selected.size})` : "Оценить выбранные";
+    el.querySelector("[data-eval-sel]").textContent = selected.size ? tf("Оценить выбранные ({n})", { n: selected.size }) : t("Оценить выбранные");
   }
 
   function draw() {
@@ -135,9 +136,9 @@ export async function mount(el) {
       const st = e ? STATUS[e.status] : ["na", "Не оценён"];
       const changed = e && e.final_score !== e.original_score;
       return `<tr class="click" data-id="${esc(r.id)}">
-        <td class="check"><input type="checkbox" data-sel="${esc(r.id)}" aria-label="Выбрать ${esc(r.id)}" ${selected.has(r.id) ? "checked" : ""}></td>
+        <td class="check"><input type="checkbox" data-sel="${esc(r.id)}" aria-label="${esc(tf("Выбрать {id}", { id: r.id }))}" ${selected.has(r.id) ? "checked" : ""}></td>
         <td><b>${esc(r.id)}</b></td>
-        <td>${r.has_audio ? "🎧 " : ""}${esc(CHANNEL[r.channel] || r.channel)}</td>
+        <td>${r.has_audio ? "🎧 " : ""}${esc(t(CHANNEL[r.channel] || r.channel))}</td>
         <td>${esc(r.language)}</td>
         <td>${esc(r.operator_name || "—")}</td>
         <td class="num">${r.turns}</td>
@@ -265,7 +266,7 @@ export async function mount(el) {
     btn.disabled = true;
     try {
       const p = await runBatch(el.querySelector("[data-progress]"), { ...body, checklist_id: el.querySelector("[data-cl]").value });
-      toast(`Оценка завершена: ${p.ok || 0} успешно${p.error ? `, ошибок ${p.error}` : ""}${p.cost ? ". " + costLine(p.cost) : ""}`, !!p.error);
+      toast(tf("Оценка завершена: {n} успешно", { n: p.ok || 0 }) + (p.error ? tf(", ошибок {e}", { e: p.error }) : "") + (p.cost ? ". " + costLine(p.cost) : ""), !!p.error);
       selected.clear();
       await load();
     } catch (err) { toast(err.message, true); } finally { btn.disabled = false; }
@@ -273,7 +274,7 @@ export async function mount(el) {
   el.querySelector("[data-eval-sel]").onclick = e => evaluate({ conversation_ids: [...selected] }, e.target);
   el.querySelector("[data-eval-all]").onclick = e => {
     const vis = visible();
-    if (!vis.length) return toast("Нет диалогов для оценки", true);
+    if (!vis.length) return toast(t("Нет диалогов для оценки"), true);
     evaluate(state.group ? { group_id: state.group } : { conversation_ids: vis.map(r => r.id) }, e.target);
   };
   el.querySelector("[data-admin]")?.addEventListener("click", () => openDataAdmin(async () => {
@@ -284,7 +285,7 @@ export async function mount(el) {
     await load();
   }));
   el.querySelector("[data-load]").onclick = () => openLoader(async r => {
-    toast(`Набор ${r.group_id}: ${r.count} диалогов (новых ${r.new}, обновлено ${r.updated})`);
+    toast(tf("Набор {g}: {n} диалогов (новых {new}, обновлено {upd})", { g: r.group_id, n: r.count, new: r.new, upd: r.updated }));
     state.group = r.group_id;
     try { sessionStorage.setItem("cqa.filters", JSON.stringify(state)); } catch { /* ignore */ }
     await load();
@@ -400,8 +401,8 @@ async function openDataAdmin(onChanged) {
     };
     $("[data-reset]").onclick = e => run(e.target,
       () => api.post("/api/admin/reset", { confirm: "DELETE", reset_checklists: $("[data-cl]").checked }),
-      r => `Удалено: ${r.deleted.conversations} диалогов, ${r.deleted.evaluations} оценок, ${r.deleted.appeals} апелляций`);
+      r => tf("Удалено: {c} диалогов, {e} оценок, {a} апелляций", { c: r.deleted.conversations, e: r.deleted.evaluations, a: r.deleted.appeals }));
     $("[data-demo]").onclick = e => run(e.target, () => api.post("/api/admin/seed-demo"),
-      r => `Загружено: ${r.loaded.conversations} диалогов, ${r.loaded.evaluations} оценок`);
+      r => tf("Загружено: {c} диалогов, {e} оценок", { c: r.loaded.conversations, e: r.loaded.evaluations }));
   });
 }

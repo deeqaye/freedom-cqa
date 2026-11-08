@@ -54,6 +54,9 @@ def run_one(evaluation_id: int) -> None:
                 "evidence_turns": [int(t) for t in by_id[c["id"]].get("evidence_turns") or []],
                 "checked_turns": by_id[c["id"]].get("checked_turns"),
                 "na_reason": by_id[c["id"]].get("na_reason"),
+                # optional translations of the rationale for the UI language switch (not exported to results.json)
+                "rationale_i18n": {lang: by_id[c["id"]][f"rationale_{lang}"] for lang in ("en", "kk")
+                                   if isinstance(by_id[c["id"]].get(f"rationale_{lang}"), str) and by_id[c["id"]][f"rationale_{lang}"].strip()} or None,
             } for c in ver.criteria]
             breakdown = compute_score(ver.criteria, {r["criterion_id"]: r["value"] for r in criteria})
             ev.criteria = criteria

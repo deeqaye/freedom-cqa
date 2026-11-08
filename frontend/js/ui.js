@@ -1,4 +1,5 @@
 import { api } from "./api.js";
+import { locale, tf } from "./i18n.js";
 
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -8,7 +9,7 @@ export const CHANNEL = { "agent chat": "Чат", "voice call": "Звонок" };
 
 export function fmtNum(x, d = 2) {
   if (x === null || x === undefined) return "—";
-  return Number(x).toLocaleString("ru-RU", { maximumFractionDigits: d });
+  return Number(x).toLocaleString(locale(), { maximumFractionDigits: d });
 }
 export function fmtTime(s) {
   if (s == null || isNaN(s)) return "--:--";
@@ -94,7 +95,7 @@ export async function runBatch(el, body) {
     const p = await api.get(`/api/evaluations/progress?ids=${ids.join(",")}`);
     const done = (p.ok || 0) + (p.error || 0);
     bar.style.width = `${(done / ids.length) * 100}%`;
-    lbl.textContent = `${done} / ${ids.length}` + (p.error ? ` · ошибок: ${p.error}` : "");
+    lbl.textContent = `${done} / ${ids.length}` + (p.error ? tf(" · ошибок: {n}", { n: p.error }) : "");
     if (done >= ids.length) {
       const cost = await api.get(`/api/stats/cost?ids=${ids.join(",")}`).catch(() => null);
       if (cost) el.insertAdjacentHTML("beforeend", `<div class="small muted" style="margin-top:6px">${costLine(cost)}</div>`);
@@ -113,18 +114,18 @@ export function fmtUsd(x) {
 /** Seconds -> "4.2 с" / "3 мин 12 с". */
 export function fmtDur(s) {
   if (s == null) return "—";
-  if (s < 60) return `${s.toFixed(s < 10 ? 1 : 0)} с`;
-  return `${Math.floor(s / 60)} мин ${Math.round(s % 60)} с`;
+  if (s < 60) return tf("{s} с", { s: s.toFixed(s < 10 ? 1 : 0) });
+  return tf("{m} мин {s} с", { m: Math.floor(s / 60), s: Math.round(s % 60) });
 }
 
 /** One-line summary of /api/stats/cost. */
 export function costLine(c) {
-  const parts = [`${c.evaluations} оценок`];
-  if (c.time.wall_clock_s != null) parts.push(`за ${fmtDur(c.time.wall_clock_s)}`);
-  if (c.time.avg_s != null) parts.push(`≈${fmtDur(c.time.avg_s)} на диалог`);
-  if (c.tokens.avg_per_evaluation != null) parts.push(`≈${c.tokens.avg_per_evaluation.toLocaleString("ru")} токенов`);
-  if (c.cost.total_usd != null) parts.push(`${fmtUsd(c.cost.total_usd)} всего, ${fmtUsd(c.cost.avg_per_evaluation_usd)} на диалог`);
-  else parts.push("стоимость не сообщена оценщиком");
+  const parts = [tf("{n} оценок", { n: c.evaluations })];
+  if (c.time.wall_clock_s != null) parts.push(tf("за {t}", { t: fmtDur(c.time.wall_clock_s) }));
+  if (c.time.avg_s != null) parts.push(tf("≈{t} на диалог", { t: fmtDur(c.time.avg_s) }));
+  if (c.tokens.avg_per_evaluation != null) parts.push(tf("≈{n} токенов", { n: c.tokens.avg_per_evaluation.toLocaleString(locale()) }));
+  if (c.cost.total_usd != null) parts.push(tf("{total} всего, {per} на диалог", { total: fmtUsd(c.cost.total_usd), per: fmtUsd(c.cost.avg_per_evaluation_usd) }));
+  else parts.push(tf("стоимость не сообщена оценщиком"));
   return parts.join(" · ");
 }
 

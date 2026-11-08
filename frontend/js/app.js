@@ -1,7 +1,8 @@
 // Shell: hash router + role switcher. Each view is a self-contained module exporting mount(el, params),
 // so any screen can be embedded on its own (e.g. a Dynamics 365 HTML web resource per screen).
 import { api, getRole, setRole } from "./api.js";
-import { toast } from "./ui.js";
+import { LANGS, getLang, setLang, startI18n, tf } from "./i18n.js";
+import { esc, toast } from "./ui.js";
 
 const routes = [
   [/^#\/conversations$/, "conversations", () => import("./views/conversations.js")],
@@ -58,14 +59,27 @@ const roleSel = document.getElementById("role");
 roleSel.value = getRole();
 roleSel.addEventListener("change", () => {
   setRole(roleSel.value);
-  toast(`Роль: ${roleSel.selectedOptions[0].text}`);
+  toast(tf("Роль: {role}", { role: roleSel.selectedOptions[0].text }));
   render();
 });
 
 api.get("/api/health").then(h => {
-  document.getElementById("evaluator-info").textContent = `Оценщик: ${h.evaluator}`;
+  document.getElementById("evaluator-info").innerHTML = `<span>Оценщик:</span> ${esc(h.evaluator)}`;
 }).catch(() => {});
 
 addEventListener("hashchange", render);
+
+// ---- interface language (RU / ҚАЗ / EN), top right of the page
+const langsEl = document.querySelector("[data-langs]");
+function drawLangs() {
+  langsEl.innerHTML = LANGS.map(([code, label]) => `<button type="button" data-lang="${code}" class="${code === getLang() ? "on" : ""}" aria-pressed="${code === getLang()}">${label}</button>`).join("");
+}
+langsEl.addEventListener("click", e => {
+  const b = e.target.closest("[data-lang]");
+  if (b) setLang(b.dataset.lang);
+});
+addEventListener("cqa:lang", () => { drawLangs(); render(); });  // views rebuild their text and number formats
+drawLangs();
+startI18n();
 addEventListener("cqa:appeals", refreshBadge);
 render();

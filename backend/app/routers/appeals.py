@@ -67,7 +67,7 @@ def appeal_out(db: Session, a: Appeal, with_context: bool = False) -> dict:
            "criterion_id": a.criterion_id, "criterion_title": d.get("title"), "criterion_type": d.get("type"),
            "steps": d.get("steps"), "na_allowed": d.get("na_allowed"), "weight": d.get("weight"),
            "original_value": a.original_value, "rationale": crit.get("rationale"),
-           "evidence_turns": crit.get("evidence_turns"), "comment": a.comment, "author_role": a.author_role,
+           "evidence_turns": crit.get("evidence_turns"), "rationale_i18n": crit.get("rationale_i18n"), "comment": a.comment, "author_role": a.author_role,
            "suggested_value": a.suggested_value,
            "status": a.status, "new_value": a.new_value, "reviewer_role": a.reviewer_role,
            "reviewer_comment": a.reviewer_comment, "improvement": a.improvement,

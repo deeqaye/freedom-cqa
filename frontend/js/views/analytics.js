@@ -1,5 +1,6 @@
 import { api, getRole } from "../api.js";
 import { attachTips, esc, fmtDur, fmtNum, fmtUsd, scoreTone } from "../ui.js";
+import { locale, t, tf } from "../i18n.js";
 
 export async function mount(el) {
   const isAdmin = getRole() !== "operator";
@@ -19,7 +20,7 @@ export async function mount(el) {
     <div class="page-head"><div><h1>Аналитика</h1><div class="sub">${isAdmin ? "Качество по всем операторам" : "Моя статистика"}</div></div>
       <div class="row">
         ${lists.length > 1 ? `<select data-cl aria-label="Чек-лист">${lists.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}</select>` : ""}
-        <select data-op ${isAdmin ? "" : ""}>${isAdmin ? `<option value="">Все операторы</option>` : ""}${operators.map(o => `<option ${!isAdmin && o === operator ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
+        <select data-op ${isAdmin ? "" : ""}>${isAdmin ? `<option value="">Все операторы</option>` : ""}${operators.map(o => `<option value="${esc(o)}" ${!isAdmin && o === operator ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>
         <div class="seg" data-period><button data-p="week" class="on">По неделям</button><button data-p="month">По месяцам</button></div>
       </div></div>
     <div class="stack" data-body></div>`;
@@ -34,7 +35,7 @@ export async function mount(el) {
     const y = v => H - 22 - (v / 100) * (H - 40);
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Средний балл по периодам">
       ${[0, 50, 100].map(v => `<line x1="${pad}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#e3e8e4"/><text x="0" y="${y(v) + 4}" font-size="11" fill="#8a978e">${v}</text>`).join("")}
-      ${series.map((s, i) => `<g data-tip="<b>${esc(s.period)}</b><br>Средний балл: ${fmtNum(s.avg_score)}<br>Диалогов: ${s.count}">
+      ${series.map((s, i) => `<g data-tip="<b>${esc(s.period)}</b><br>${esc(tf("Средний балл: {v}", { v: fmtNum(s.avg_score) }))}<br>${esc(tf("Диалогов: {n}", { n: s.count }))}">
         <rect x="${x(i) - 4}" y="0" width="${bw + 8}" height="${H}" fill="transparent"/>
         <path d="M${x(i)},${y(0)} V${y(s.avg_score || 0) + 4} q0,-4 4,-4 h${bw - 8} q4,0 4,4 V${y(0)} Z" fill="#1f7a3a"/>
         <text x="${x(i) + bw / 2}" y="${y(s.avg_score || 0) - 6}" text-anchor="middle" font-size="12" fill="#17231b">${fmtNum(s.avg_score, 1)}</text>
@@ -46,7 +47,7 @@ export async function mount(el) {
     const rows = Object.entries(criteria).filter(([, v]) => v.avg_pct != null || v.na);
     if (!rows.length) return `<div class="empty">Нет данных</div>`;
     return `<div class="bars">${rows.map(([k, v]) => `
-      <div class="bar-row" data-tip="<b>${esc(titles[k] || k)}</b><br>Выполнение: ${v.avg_pct == null ? "—" : fmtNum(v.avg_pct, 1) + "%"}<br>Применим: ${v.applicable} · N/A: ${v.na}">
+      <div class="bar-row" data-tip="<b>${esc(t(titles[k] || k))}</b><br>${esc(tf("Выполнение: {v}", { v: v.avg_pct == null ? "—" : fmtNum(v.avg_pct, 1) + "%" }))}<br>${esc(tf("Применим: {a} · N/A: {na}", { a: v.applicable, na: v.na }))}">
         <span>${esc(titles[k] || k)}</span>
         <div class="track"><div class="fill" style="width:${v.avg_pct || 0}%"></div></div>
         <span class="num">${v.avg_pct == null ? "N/A" : fmtNum(v.avg_pct, 0) + "%"}</span></div>`).join("")}</div>`;
@@ -63,7 +64,7 @@ export async function mount(el) {
     body.innerHTML = `
       <div class="tiles">${tiles.map(([k, v]) => `<div class="card tile"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("")}</div>
       <div class="grid2">
-        <div class="card"><h2>Средний балл ${period === "week" ? "по неделям" : "по месяцам"}</h2>${seriesChart(d.series)}
+        <div class="card"><h2>${period === "week" ? "Средний балл по неделям" : "Средний балл по месяцам"}</h2>${seriesChart(d.series)}
           <p class="small muted">Для чатов без даты в данных используется дата загрузки.</p></div>
         <div class="card"><h2>Выполнение критериев</h2>${critBars(d.criteria)}</div>
       </div>
@@ -114,7 +115,7 @@ export async function mount(el) {
       <table class="tbl"><thead><tr><th></th>${head}</tr></thead><tbody>
         <tr><td>Оценено диалогов</td>${cols.map(c => `<td class="num">${c.count}</td>`).join("")}</tr>
         <tr><td>Средний балл (все оценённые)</td>${cols.map(c => `<td class="num">${fmtNum(c.avg_score)}</td>`).join("")}</tr>
-        <tr><td>Средний балл (общие ${d.shared_count})</td>${cols.map(c => `<td class="num"><b>${fmtNum(d.shared_avg[c.version_id])}</b></td>`).join("")}</tr>
+        <tr><td>${tf("Средний балл (общие {n})", { n: d.shared_count })}</td>${cols.map(c => `<td class="num"><b>${fmtNum(d.shared_avg[c.version_id])}</b></td>`).join("")}</tr>
         <tr><td>С грубыми ошибками</td>${cols.map(c => `<td class="num">${c.critical_count}</td>`).join("")}</tr>
       </tbody></table>
       ${top.length ? `<h3 style="margin-top:14px">Наибольшее расхождение</h3>
@@ -128,19 +129,18 @@ export async function mount(el) {
   function costCard(c) {
     if (!c || !c.evaluations) return `<div class="card"><h2>Стоимость обработки</h2><div class="empty">Нет запусков оценщика (импортированные результаты не измерялись)</div></div>`;
     const CH = { "agent chat": "Чаты", "voice call": "Звонки" };
-    const t = [["Время на диалог (сред. / p95)", `${fmtDur(c.time.avg_s)} / ${fmtDur(c.time.p95_s)}`],
-      ["Токенов на диалог (вход → выход)", c.tokens.avg_input == null ? "—" : `${c.tokens.avg_input.toLocaleString("ru")} → ${c.tokens.avg_output.toLocaleString("ru")}`],
+    const tl = [["Время на диалог (сред. / p95)", `${fmtDur(c.time.avg_s)} / ${fmtDur(c.time.p95_s)}`],
+      ["Токенов на диалог (вход → выход)", c.tokens.avg_input == null ? "—" : `${c.tokens.avg_input.toLocaleString(locale())} → ${c.tokens.avg_output.toLocaleString(locale())}`],
       ["Стоимость на диалог", fmtUsd(c.cost.avg_per_evaluation_usd)],
       ["На 1000 диалогов", fmtUsd(c.cost.per_1000_usd)]];
     return `<div class="card"><h2>Стоимость обработки</h2>
-      <div class="tiles">${t.map(([k, v]) => `<div class="tile"><div class="k">${k}</div><div class="v" style="font-size:22px">${v}</div></div>`).join("")}</div>
-      <p class="small muted">Последняя оценка каждого диалога: ${c.evaluations} (ошибок ${c.errors}). Всего ${c.tokens.total.toLocaleString("ru")} токенов,
-        ${fmtUsd(c.cost.total_usd)}${c.cost.usd_per_1m_tokens != null ? ` (${fmtUsd(c.cost.usd_per_1m_tokens)} за 1M токенов)` : ""}.
-        ${c.cost.unpriced ? `Без стоимости: ${c.cost.unpriced} — оценщик не вернул usage, модели нет в тарифах.` : ""}</p>
+      <div class="tiles">${tl.map(([k, v]) => `<div class="tile"><div class="k">${k}</div><div class="v" style="font-size:22px">${v}</div></div>`).join("")}</div>
+      <p class="small muted">${tf("Последняя оценка каждого диалога: {n} (ошибок {e}). Всего {tok} токенов, {usd}", { n: c.evaluations, e: c.errors, tok: c.tokens.total.toLocaleString(locale()), usd: fmtUsd(c.cost.total_usd) })}${c.cost.usd_per_1m_tokens != null ? tf(" ({usd} за 1M токенов)", { usd: fmtUsd(c.cost.usd_per_1m_tokens) }) : ""}.
+        ${c.cost.unpriced ? tf("Без стоимости: {n} — оценщик не вернул usage, модели нет в тарифах.", { n: c.cost.unpriced }) : ""}</p>
       <div class="grid2">
         <table class="tbl"><thead><tr><th>Канал</th><th class="num">Диалогов</th><th class="num">Время</th><th class="num">Токенов</th><th class="num">$ / диалог</th></tr></thead><tbody>
           ${Object.entries(c.by_channel).map(([k, v]) => `<tr><td>${esc(CH[k] || k)}</td><td class="num">${v.count}</td><td class="num">${fmtDur(v.avg_s)}</td>
-            <td class="num">${v.avg_tokens == null ? "—" : v.avg_tokens.toLocaleString("ru")}</td><td class="num">${fmtUsd(v.avg_cost_usd)}</td></tr>`).join("")}</tbody></table>
+            <td class="num">${v.avg_tokens == null ? "—" : v.avg_tokens.toLocaleString(locale())}</td><td class="num">${fmtUsd(v.avg_cost_usd)}</td></tr>`).join("")}</tbody></table>
         <table class="tbl"><thead><tr><th>Модель</th><th class="num">Оценок</th><th class="num">Тариф вход / выход, $ за 1M</th><th class="num">Итого</th></tr></thead><tbody>
           ${c.by_model.map(m => `<tr><td>${esc(m.model)}</td><td class="num">${m.count}</td>
             <td class="num">${m.price_per_1m ? `${m.price_per_1m.input} / ${m.price_per_1m.output}` : "—"}</td><td class="num">${fmtUsd(m.cost_usd)}</td></tr>`).join("")}</tbody></table>

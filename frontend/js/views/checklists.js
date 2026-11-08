@@ -1,5 +1,6 @@
 import { api, getRole } from "../api.js";
 import { esc, fmtNum, costLine, modal, runBatch, toast } from "../ui.js";
+import { t, tf } from "../i18n.js";
 
 const TYPES = { binary: "Да / Нет", scale: "Шкала", flag: "Флаг (без баллов)" };
 const NEW = "__new";
@@ -14,11 +15,11 @@ const TEMPLATE = () => [{ id: "criterion_1", section: "Основное", title:
  *  or a bare array of criteria. Missing optional fields get defaults; the server validates the rest. */
 function parseChecklistFile(text) {
   let d;
-  try { d = JSON.parse(text); } catch { throw new Error("Файл не является корректным JSON"); }
+  try { d = JSON.parse(text); } catch { throw new Error(t("Файл не является корректным JSON")); }
   const criteria = Array.isArray(d) ? d : d.criteria || (d.version && d.version.criteria);
-  if (!Array.isArray(criteria) || !criteria.length) throw new Error("В файле нет списка критериев (ожидается criteria: [...])");
+  if (!Array.isArray(criteria) || !criteria.length) throw new Error(t("В файле нет списка критериев (ожидается criteria: [...])"));
   const bad = criteria.findIndex(c => !c || typeof c !== "object" || !c.id || !c.title || !["binary", "scale", "flag"].includes(c.type));
-  if (bad >= 0) throw new Error(`Критерий №${bad + 1}: нужны id, title и type (binary / scale / flag)`);
+  if (bad >= 0) throw new Error(tf("Критерий №{n}: нужны id, title и type (binary / scale / flag)", { n: bad + 1 }));
   return {
     id: Array.isArray(d) ? "" : d.id || "", name: Array.isArray(d) ? "" : d.name || "",
     criteria: criteria.map(c => ({ section: "", description: "", na_allowed: false, na_condition: null, prompt_hint: "", ...c,
@@ -73,9 +74,10 @@ export async function mount(el) {
     dirty = false;
     const vers = await api.get(`/api/checklists/${clId}/versions`);
     el.querySelector("[data-ver]").innerHTML = vers.slice().reverse().map(v =>
-      `<option value="${v.version}" ${v.version === data.version.version ? "selected" : ""}>v${v.version}${v.active ? " · активна" : ""} — ${esc(v.note || v.created_by)}</option>`).join("");
-    el.querySelector("[data-sub]").textContent = `Версия ${data.version.version}${data.version.active ? " (активна)" : ""} · ${crit.length} критериев · изменения сохраняются как новая версия, старые оценки ссылаются на свою версию`;
-    el.querySelector("[data-apply-ver]").textContent = `будет использована активная версия v${data.active_version}`;
+      `<option value="${v.version}" ${v.version === data.version.version ? "selected" : ""}>v${v.version}${v.active ? " · " + t("активна") : ""} — ${esc(v.note || v.created_by)}</option>`).join("");
+    el.querySelector("[data-sub]").textContent = tf(data.version.active ? "Версия {v} (активна) · {n} критериев · изменения сохраняются как новая версия, старые оценки ссылаются на свою версию"
+      : "Версия {v} · {n} критериев · изменения сохраняются как новая версия, старые оценки ссылаются на свою версию", { v: data.version.version, n: crit.length });
+    el.querySelector("[data-apply-ver]").textContent = tf("будет использована активная версия v{v}", { v: data.active_version });
     draw();
   }
 
@@ -133,7 +135,7 @@ export async function mount(el) {
     const box = e.target.closest("[data-i]");
     if (!box) return;
     const i = +box.dataset.i;
-    if (e.target.matches("[data-del]")) { if (confirm(`Удалить критерий «${crit[i].title || crit[i].id}»?`)) { crit.splice(i, 1); dirty = true; draw(); } }
+    if (e.target.matches("[data-del]")) { if (confirm(tf("Удалить критерий «{name}»?", { name: crit[i].title || crit[i].id }))) { crit.splice(i, 1); dirty = true; draw(); } }
     if (e.target.matches("[data-up]")) { [crit[i - 1], crit[i]] = [crit[i], crit[i - 1]]; dirty = true; draw(); }
     if (e.target.matches("[data-down]")) { [crit[i + 1], crit[i]] = [crit[i], crit[i + 1]]; dirty = true; draw(); }
   });
@@ -155,8 +157,8 @@ export async function mount(el) {
       dirty = dirty || add.length > 0;
       draw();
       const skipped = criteria.length - add.length;
-      toast(add.length ? `Добавлено критериев: ${add.length}${skipped ? `, пропущено (такой id уже есть): ${skipped}` : ""}. Нажмите «Сохранить новую версию».`
-        : "Все критерии из файла уже есть в чек-листе", !add.length);
+      toast(add.length ? tf(skipped ? "Добавлено критериев: {n}, пропущено (такой id уже есть): {s}. Нажмите «Сохранить новую версию»." : "Добавлено критериев: {n}. Нажмите «Сохранить новую версию».", { n: add.length, s: skipped })
+        : t("Все критерии из файла уже есть в чек-листе"), !add.length);
       if (add.length) critsEl.querySelector(".cl-crit.new")?.scrollIntoView({ behavior: "smooth", block: "center" });
     } catch (err) { toast(err.message, true); }
   });
@@ -173,19 +175,19 @@ export async function mount(el) {
   function problems() {
     const out = [], seen = new Map();
     crit.forEach((c, i) => {
-      const name = `Критерий №${i + 1}${c.title ? ` «${c.title}»` : ""}`;
-      if (!c.title || !c.title.trim()) out.push([i, `${name}: укажите название`]);
-      if (!CRIT_ID_RE.test(c.id || "")) out.push([i, `${name}: ID — от 2 символов, строчная латиница, цифры и «_», начинается с буквы (сейчас: «${c.id || ""}»)`]);
-      else if (seen.has(c.id)) out.push([i, `${name}: ID «${c.id}» уже используется в критерии №${seen.get(c.id) + 1}`]);
+      const name = c.title ? tf("Критерий №{n} «{title}»", { n: i + 1, title: c.title }) : tf("Критерий №{n}", { n: i + 1 });
+      if (!c.title || !c.title.trim()) out.push([i, tf("{name}: укажите название", { name })]);
+      if (!CRIT_ID_RE.test(c.id || "")) out.push([i, tf("{name}: ID — от 2 символов, строчная латиница, цифры и «_», начинается с буквы (сейчас: «{id}»)", { name, id: c.id || "" })]);
+      else if (seen.has(c.id)) out.push([i, tf("{name}: ID «{id}» уже используется в критерии №{n}", { name, id: c.id, n: seen.get(c.id) + 1 })]);
       seen.set(c.id, seen.has(c.id) ? seen.get(c.id) : i);
-      if (c.type !== "flag" && !(+c.weight >= 0)) out.push([i, `${name}: вес должен быть числом ≥ 0`]);
-      if (c.type === "scale" && (!Array.isArray(c.steps) || c.steps.length < 2 || c.steps.some(x => !Number.isInteger(x)))) out.push([i, `${name}: ступени шкалы — минимум две целых, через запятую (например 0, 5, 10)`]);
+      if (c.type !== "flag" && !(+c.weight >= 0)) out.push([i, tf("{name}: вес должен быть числом ≥ 0", { name })]);
+      if (c.type === "scale" && (!Array.isArray(c.steps) || c.steps.length < 2 || c.steps.some(x => !Number.isInteger(x)))) out.push([i, tf("{name}: ступени шкалы — минимум две целых, через запятую (например 0, 5, 10)", { name })]);
     });
-    if (!crit.some(c => c.type !== "flag" && +c.weight > 0)) out.push([0, "Нужен хотя бы один критерий с весом больше 0"]);
+    if (!crit.some(c => c.type !== "flag" && +c.weight > 0)) out.push([0, t("Нужен хотя бы один критерий с весом больше 0")]);
     return out;
   }
   /** Server validation error "criteria.8.id: ..." -> "Критерий №9 «…» (ID): ..." */
-  const explain = msg => msg.replace(/criteria\.(\d+)\.(\w+): /g, (_, i, f) => `Критерий №${+i + 1}${crit[+i]?.title ? ` «${crit[+i].title}»` : ""} (${FIELD_RU[f] || f}): `);
+  const explain = msg => msg.replace(/criteria\.(\d+)\.(\w+): /g, (_, i, f) => tf("{name} ({field}): ", { name: crit[+i]?.title ? tf("Критерий №{n} «{title}»", { n: +i + 1, title: crit[+i].title }) : tf("Критерий №{n}", { n: +i + 1 }), field: t(FIELD_RU[f]) || f }));
   function markInvalid(list) {
     critsEl.querySelectorAll(".cl-crit.invalid").forEach(n => n.classList.remove("invalid"));
     list.forEach(([i]) => critsEl.querySelector(`[data-i="${i}"]`)?.classList.add("invalid"));
@@ -199,7 +201,7 @@ export async function mount(el) {
     e.target.disabled = true;
     try {
       const v = await api.put(`/api/checklists/${clId}`, { criteria, note: el.querySelector("[data-note]").value.trim() || null });
-      toast(`Сохранено как версия v${v.version} и активировано`);
+      toast(tf("Сохранено как версия v{v} и активировано", { v: v.version }));
       el.querySelector("[data-note]").value = "";
       list = await api.get("/api/checklists");
       drawChecklistSelect();
@@ -222,7 +224,7 @@ export async function mount(el) {
 
   const clSel = el.querySelector("[data-cl]");
   function drawChecklistSelect() {
-    clSel.innerHTML = list.map(c => `<option value="${esc(c.id)}" ${c.id === clId ? "selected" : ""}>${esc(c.name)} · v${c.active_version}</option>`).join("")
+    clSel.innerHTML = list.map(c => `<option value="${esc(c.id)}" ${c.id === clId ? "selected" : ""}>${esc(t(c.name))} · v${c.active_version}</option>`).join("")
       + (canEdit ? `<option disabled>──────────</option><option value="${NEW}">＋ Новый чек-лист…</option>` : "");
   }
   drawChecklistSelect();
@@ -235,7 +237,7 @@ export async function mount(el) {
       <label class="f">Название<input data-name placeholder="например, Продажи — входящие звонки" autocomplete="off"></label>
       <label class="f">ID (латиница, цифры, дефис — используется в API)<input data-id placeholder="prodazhi-vhodyaschie" autocomplete="off"></label>
       <div class="f radios">Основа
-        <label><input type="radio" name="base" value="copy" checked> Копия текущего: <b>${esc(cur?.name || "")}</b> (v${data?.version.version ?? ""}, ${crit.length} критериев${dirty ? ", с несохранёнными правками" : ""})</label>
+        <label><input type="radio" name="base" value="copy" checked> Копия текущего: <b>${esc(t(cur?.name || ""))}</b> ${esc(tf(dirty ? "(v{v}, {n} критериев, с несохранёнными правками)" : "(v{v}, {n} критериев)", { v: data?.version.version ?? "", n: crit.length }))}</label>
         <label><input type="radio" name="base" value="empty"> Пустой — один критерий-шаблон</label>
         <label><input type="radio" name="base" value="file"> Из файла JSON</label>
       </div>
@@ -261,7 +263,7 @@ export async function mount(el) {
         if (!f) return;
         try {
           fromFile = parseChecklistFile(await readFile(f));
-          $("[data-file-info]").textContent = `${f.name}: ${fromFile.criteria.length} критериев`;
+          $("[data-file-info]").textContent = tf("{file}: {n} критериев", { file: f.name, n: fromFile.criteria.length });
           if (!$("[data-name]").value.trim() && fromFile.name) $("[data-name]").value = fromFile.name;
           if (!$("[data-id]").value.trim()) {
             const id = fromFile.id && !list.some(c => c.id === fromFile.id) ? fromFile.id : slug($("[data-name]").value || f.name.replace(/\.json$/i, ""));
@@ -271,14 +273,14 @@ export async function mount(el) {
       };
       $("[data-go]").onclick = async e => {
         const name = $("[data-name]").value.trim(), id = $("[data-id]").value.trim();
-        if (name.length < 2) return ($("[data-err]").textContent = "Укажите название");
-        if (!/^[a-z0-9][a-z0-9-]{1,63}$/.test(id)) return ($("[data-err]").textContent = "ID: от 2 символов, строчная латиница, цифры и дефис");
-        if (list.some(c => c.id === id)) return ($("[data-err]").textContent = `Чек-лист с ID «${id}» уже есть`);
+        if (name.length < 2) return ($("[data-err]").textContent = t("Укажите название"));
+        if (!/^[a-z0-9][a-z0-9-]{1,63}$/.test(id)) return ($("[data-err]").textContent = t("ID: от 2 символов, строчная латиница, цифры и дефис"));
+        if (list.some(c => c.id === id)) return ($("[data-err]").textContent = tf("Чек-лист с ID «{id}» уже есть", { id }));
         const base = m.querySelector("input[name=base]:checked").value;
-        if (base === "file" && !fromFile) return ($("[data-err]").textContent = "Выберите JSON-файл с критериями");
+        if (base === "file" && !fromFile) return ($("[data-err]").textContent = t("Выберите JSON-файл с критериями"));
         const criteria = base === "copy" ? cleanCriteria() : base === "file" ? fromFile.criteria : TEMPLATE();
         const note = $("[data-note-new]").value.trim()
-          || (base === "copy" ? `Копия ${cur?.name} v${data?.version.version}` : base === "file" ? `Импорт из файла ${$("[data-file]").files[0].name}` : "Создан с нуля");
+          || (base === "copy" ? tf("Копия {name} v{v}", { name: cur?.name, v: data?.version.version }) : base === "file" ? tf("Импорт из файла {f}", { f: $("[data-file]").files[0].name }) : t("Создан с нуля"));
         e.target.disabled = true;
         try {
           await api.post("/api/checklists", { id, name, criteria, note });
@@ -288,7 +290,7 @@ export async function mount(el) {
           clId = id;
           drawChecklistSelect();
           await load();
-          toast(`Чек-лист «${name}» создан — он доступен во всех списках выбора чек-листа`);
+          toast(tf("Чек-лист «{name}» создан — он доступен во всех списках выбора чек-листа", { name }));
         } catch (err) { $("[data-err]").textContent = err.message; e.target.disabled = false; }
       };
     });
@@ -297,24 +299,24 @@ export async function mount(el) {
   el.querySelector("[data-new]")?.addEventListener("click", () => openCreate());
   clSel.onchange = () => {
     if (clSel.value === NEW) { clSel.value = clId; return openCreate(); }
-    if (dirty && !confirm("Несохранённые изменения будут потеряны. Продолжить?")) { clSel.value = clId; return; }
+    if (dirty && !confirm(t("Несохранённые изменения будут потеряны. Продолжить?"))) { clSel.value = clId; return; }
     clId = clSel.value;
     load();
   };
   el.querySelector("[data-ver]").onchange = e => {
-    if (dirty && !confirm("Несохранённые изменения будут потеряны. Продолжить?")) return;
+    if (dirty && !confirm(t("Несохранённые изменения будут потеряны. Продолжить?"))) return;
     load(+e.target.value);
   };
 
   const convs = await api.get("/api/conversations");
   const groups = [...new Set(convs.map(c => c.group_id))];
-  el.querySelector("[data-group]").innerHTML = groups.map(g => `<option>${esc(g)}</option>`).join("");
+  el.querySelector("[data-group]").innerHTML = groups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join("");
   el.querySelector("[data-apply]").onclick = async e => {
-    if (dirty) return toast("Сначала сохраните изменения", true);
+    if (dirty) return toast(t("Сначала сохраните изменения"), true);
     e.target.disabled = true;
     try {
       const p = await runBatch(el.querySelector("[data-progress]"), { group_id: el.querySelector("[data-group]").value, checklist_id: clId });
-      toast(`Готово: ${p.ok || 0} оценено${p.error ? `, ошибок ${p.error}` : ""}${p.cost ? ". " + costLine(p.cost) : ""}`, !!p.error);
+      toast(tf("Готово: {n} оценено", { n: p.ok || 0 }) + (p.error ? tf(", ошибок {e}", { e: p.error }) : "") + (p.cost ? ". " + costLine(p.cost) : ""), !!p.error);
     } catch (err) { toast(err.message, true); } finally { e.target.disabled = false; }
   };
 
