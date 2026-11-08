@@ -70,11 +70,11 @@ If the evaluator reports tokens without a cost, the service prices them from the
 | DEV (65 conversations, one run, 4 threads) | value |
 |---|---|
 | model | `gpt-6-luna` (OpenAI, `external_api`), $0.10 / $0.50 per 1M input / output tokens |
-| time per conversation (avg / p95) | 15.5 s / 27.5 s (chat 14.2 s, call 31.7 s); whole DEV in 270 s |
-| tokens per conversation (in → out) | ≈ 5 597 → 1 560 (evaluation + translation call) |
-| cost per conversation / per 1000 | $0.00134 / ≈ $1.34 (chat $0.00126, call $0.00233); whole DEV $0.087 |
+| time per conversation (avg / p95) | 15.3 s / 30.6 s (chat 13.9 s, call 31.1 s); whole DEV in 272 s |
+| tokens per conversation (in → out) | ≈ 5 597 → 1 570 (evaluation + translation call) |
+| cost per conversation / per 1000 | $0.00134 / ≈ $1.34 (chat $0.00127, call $0.00229); whole DEV $0.087 |
 
-Measured by the NLP evaluator run (see [nlp/README.md](nlp/README.md) §5).
+Measured by `scripts/export_results.py DEV --evaluate --version 1` (the run that produced `results/dev/results.json`). Control set FBroker (10 chats): 42 s wall, 15.3 s per chat, $0.013 total.
 
 ## Submitting results
 ```bash
