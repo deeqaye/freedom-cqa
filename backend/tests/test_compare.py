@@ -17,7 +17,9 @@ def test_two_checklists_compare():
         assert one["checklist"]["id"] == "chat-quality" and one["checklist"]["name"]
         crit = {r["criterion_id"] for r in c.get(f"/api/conversations/{conv}/evaluation?checklist_id=compliance").json()["criteria"]}
         assert {"risk_disclosure", "next_step", "accuracy"} <= crit
-        cmp = c.get("/api/stats/compare").json()
+        assert len(c.get("/api/stats/compare").json()["columns"]) >= 2
+        cmp = c.get("/api/stats/compare?checklist_ids=chat-quality,compliance").json()
+        assert {col["checklist_id"] for col in cmp["columns"]} == {"chat-quality", "compliance"}
         assert len(cmp["columns"]) >= 2 and cmp["shared_count"] >= 1
         row = next(r for r in cmp["rows"] if r["conversation_id"] == conv)
         assert len(row["critical"]) >= 2

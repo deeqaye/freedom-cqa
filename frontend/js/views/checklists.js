@@ -1,18 +1,27 @@
 import { api, getRole } from "../api.js";
-import { esc, fmtNum, costLine, runBatch, toast } from "../ui.js";
+import { esc, fmtNum, costLine, modal, runBatch, toast } from "../ui.js";
 
 const TYPES = { binary: "Да / Нет", scale: "Шкала", flag: "Флаг (без баллов)" };
+const NEW = "__new";
+// Cyrillic -> Latin for a readable checklist id ("Продажи 2025" -> "prodazhi-2025")
+const TR = { а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z", и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o",
+  п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "h", ц: "ts", ч: "ch", ш: "sh", щ: "sch", ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya",
+  ә: "a", ғ: "g", қ: "q", ң: "n", ө: "o", ұ: "u", ү: "u", һ: "h", і: "i" };
+const slug = t => [...t.toLowerCase()].map(ch => TR[ch] ?? ch).join("").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+const TEMPLATE = () => [{ id: "criterion_1", section: "Основное", title: "Новый критерий", type: "binary", weight: 100, na_allowed: false,
+  description: "Да — опишите, когда критерий выполнен.", na_condition: null, prompt_hint: "" }];
 const blank = () => ({ id: "", section: "", title: "", type: "binary", weight: 10, na_allowed: false, description: "", na_condition: "", prompt_hint: "", _new: true });
 
 export async function mount(el) {
-  const list = await api.get("/api/checklists");
+  let list = await api.get("/api/checklists");
   let clId = list[0]?.id, data = null, crit = [], dirty = false;
   const canEdit = ["admin", "lead"].includes(getRole());
 
   el.innerHTML = `
     <div class="page-head"><div><h1>Чек-листы</h1><div class="sub" data-sub></div></div>
-      <div class="row"><select data-cl>${list.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}</select>
-        <select data-ver aria-label="Версия"></select></div></div>
+      <div class="row"><select data-cl aria-label="Чек-лист"></select>
+        <select data-ver aria-label="Версия"></select>
+        ${canEdit ? `<button class="btn ghost" data-new>＋ Новый чек-лист</button>` : ""}</div></div>
     ${canEdit ? "" : `<div class="alert info mb-2">Роль «Оператор» — только просмотр. Редактирование доступно администратору и главному специалисту.</div>`}
     <div class="stack">
       <div class="card row" data-bar>
@@ -30,6 +39,53 @@ export async function mount(el) {
     </div>`;
 
   const critsEl = el.querySelector("[data-crits]");
+  const clSel = el.querySelector("[data-cl]");
+  function drawChecklistSelect() {
+    clSel.innerHTML = list.map(c => `<option value="${esc(c.id)}" ${c.id === clId ? "selected" : ""}>${esc(c.name)} · v${c.active_version}</option>`).join("")
+      + (canEdit ? `<option disabled>──────────</option><option value="${NEW}">＋ Новый чек-лист…</option>` : "");
+  }
+  drawChecklistSelect();
+
+  /** Create a checklist (empty template or a copy of the open one); it then appears in every checklist menu. */
+  function openCreate() {
+    const cur = list.find(c => c.id === clId);
+    modal(`
+      <h2>Новый чек-лист</h2>
+      <label class="f">Название<input data-name placeholder="например, Продажи — входящие звонки" autocomplete="off"></label>
+      <label class="f">ID (латиница, цифры, дефис — используется в API)<input data-id placeholder="prodazhi-vhodyaschie" autocomplete="off"></label>
+      <div class="f radios">Основа
+        <label class="row small"><input type="radio" name="base" value="copy" checked> Копия текущего: <b>${esc(cur?.name || "")}</b> (v${data?.version.version ?? ""}, ${crit.length} критериев${dirty ? ", с несохранёнными правками" : ""})</label>
+        <label class="row small"><input type="radio" name="base" value="empty"> Пустой — один критерий-шаблон</label>
+      </div>
+      <label class="f">Комментарий к версии (необязательно)<input data-note-new autocomplete="off"></label>
+      <div class="small text-bad" data-err></div>
+      <div class="row"><span class="spacer"></span><button class="btn ghost" data-close>Отмена</button><button class="btn" data-go>Создать</button></div>`,
+    (m, close) => {
+      const $ = q => m.querySelector(q);
+      let idTouched = false;
+      $("[data-name]").oninput = () => { if (!idTouched) $("[data-id]").value = slug($("[data-name]").value); };
+      $("[data-id]").oninput = () => { idTouched = true; };
+      $("[data-go]").onclick = async e => {
+        const name = $("[data-name]").value.trim(), id = $("[data-id]").value.trim();
+        if (name.length < 2) return ($("[data-err]").textContent = "Укажите название");
+        if (!/^[a-z0-9][a-z0-9-]{1,63}$/.test(id)) return ($("[data-err]").textContent = "ID: от 2 символов, строчная латиница, цифры и дефис");
+        if (list.some(c => c.id === id)) return ($("[data-err]").textContent = `Чек-лист с ID «${id}» уже есть`);
+        const copy = m.querySelector("input[name=base]:checked").value === "copy";
+        e.target.disabled = true;
+        try {
+          await api.post("/api/checklists", { id, name, criteria: copy ? cleanCriteria() : TEMPLATE(),
+            note: $("[data-note-new]").value.trim() || (copy ? `Копия ${cur?.name} v${data?.version.version}` : "Создан с нуля") });
+          close();
+          dirty = false;
+          list = await api.get("/api/checklists");
+          clId = id;
+          drawChecklistSelect();
+          await load();
+          toast(`Чек-лист «${name}» создан — он доступен во всех списках выбора чек-листа`);
+        } catch (err) { $("[data-err]").textContent = err.message; e.target.disabled = false; }
+      };
+    });
+  }
 
   async function load(version) {
     data = await api.get(`/api/checklists/${clId}${version ? `?version=${version}` : ""}`);
@@ -96,22 +152,34 @@ export async function mount(el) {
     crit.push(blank()); dirty = true; draw();
     critsEl.lastElementChild.previousElementSibling?.scrollIntoView({ behavior: "smooth", block: "center" });
   });
-  el.querySelector("[data-save]")?.addEventListener("click", async e => {
-    const criteria = crit.map(({ _new, ...c }) => {
+  /** Editor state -> API criteria. */
+  function cleanCriteria() {
+    return crit.map(({ _new, ...c }) => {
       const out = { ...c, weight: c.type === "flag" ? 0 : +c.weight };
       if (out.type !== "scale") { delete out.steps; delete out.step_labels; }
       if (!out.na_allowed) out.na_condition = null;
       return out;
     });
+  }
+  el.querySelector("[data-save]")?.addEventListener("click", async e => {
+    const criteria = cleanCriteria();
     e.target.disabled = true;
     try {
       const v = await api.put(`/api/checklists/${clId}`, { criteria, note: el.querySelector("[data-note]").value.trim() || null });
       toast(`Сохранено как версия v${v.version} и активировано`);
       el.querySelector("[data-note]").value = "";
+      list = await api.get("/api/checklists");
+      drawChecklistSelect();
       await load();
     } catch (err) { toast(err.message, true); } finally { e.target.disabled = false; }
   });
-  el.querySelector("[data-cl]").onchange = e => { clId = e.target.value; load(); };
+  el.querySelector("[data-new]")?.addEventListener("click", () => openCreate());
+  clSel.onchange = () => {
+    if (clSel.value === NEW) { clSel.value = clId; return openCreate(); }
+    if (dirty && !confirm("Несохранённые изменения будут потеряны. Продолжить?")) { clSel.value = clId; return; }
+    clId = clSel.value;
+    load();
+  };
   el.querySelector("[data-ver]").onchange = e => {
     if (dirty && !confirm("Несохранённые изменения будут потеряны. Продолжить?")) return;
     load(+e.target.value);

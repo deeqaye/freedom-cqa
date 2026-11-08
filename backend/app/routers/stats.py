@@ -128,9 +128,11 @@ def cost(group_id: str | None = None, ids: str | None = None, evaluator: str | N
 
 
 @router.get("/compare")
-def compare(group_id: str | None = None, all_versions: bool = False, db: Session = Depends(get_db)):
+def compare(group_id: str | None = None, all_versions: bool = False, checklist_ids: str | None = None,
+            db: Session = Depends(get_db)):
     """Same conversations under different checklists: latest ok evaluation per (conversation, checklist version).
-    By default one column per checklist (its active version, else the newest one with evaluations); all_versions=true shows every version."""
+    By default one column per checklist (its active version, else the newest one with evaluations); all_versions=true shows every version.
+    checklist_ids=a,b limits the columns to those checklists ("shared" = evaluated under all of them)."""
     q = select(Evaluation, ChecklistVersion, Checklist, Conversation) \
         .join(ChecklistVersion, ChecklistVersion.id == Evaluation.checklist_version_id) \
         .join(Checklist, Checklist.id == ChecklistVersion.checklist_id) \
@@ -138,6 +140,8 @@ def compare(group_id: str | None = None, all_versions: bool = False, db: Session
         .where(Evaluation.status == "ok").order_by(Evaluation.id)
     if group_id:
         q = q.where(Conversation.dataset_group_id == group_id)
+    if checklist_ids:
+        q = q.where(Checklist.id.in_([x for x in checklist_ids.split(",") if x]))
     cells, cols = {}, {}
     for ev, ver, cl, c in db.execute(q).all():
         cols[ver.id] = {"version_id": ver.id, "checklist_id": cl.id, "checklist_name": cl.name, "version": ver.version}
