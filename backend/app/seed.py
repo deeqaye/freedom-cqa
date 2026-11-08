@@ -102,6 +102,8 @@ def seed_demo(db: Session) -> dict:
 
 def run(db: Session) -> None:
     seed_checklist(db)
+    from .services.ingest import backfill_operator_names
+    backfill_operator_names(db)  # conversations stored before the name extractor learned more phrasings
     if db.get(Meta, SEEDED):
         return
     if not db.query(Conversation).first():  # brand-new database

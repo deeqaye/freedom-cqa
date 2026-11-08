@@ -13,7 +13,18 @@ from sqlalchemy.orm import Session
 from ..config import INGEST_ALLOWED_HOSTS, ORG_API_URL, SNAPSHOT_DIR
 from ..models import Conversation
 
-OPERATOR_NAME = re.compile(r"(?:меня зовут|my name is|менің атым)\s+([A-ZА-ЯЁӘҒҚҢӨҰҮҺІ][\w\-]+)", re.I)
+# How operators introduce themselves (DEV data): "меня зовут Алина", "Здравствуйте, я Тимур", "Я Лера из поддержки",
+# "Hi, I'm Maya", "my name is ...", "менің атым Аружан", "мен Дана", "Мен Нұрланмын" (Kazakh "I am" ending on the name).
+# The intro phrase is case-insensitive; the name itself must start with a capital letter.
+_UP = "A-ZА-ЯЁӘҒҚҢӨҰҮҺІ"
+_NAME = rf"([{_UP}][\w\-]+)"
+OPERATOR_NAME = [
+    re.compile(rf"(?i:меня зовут|my name is|менің атым|мое имя|моё имя)\s+{_NAME}"),
+    re.compile(rf"(?:^|[.!?,;:—–-]\s*)(?i:я|i'm|i am|мен)\s+{_NAME}"),  # "Здравствуйте, я Тимур", "Hi, I'm Maya"
+]
+# capitalised words that can follow "я"/"мен" without being a name (polite pronouns etc.)
+_NOT_NAME = {"вам", "вас", "вы", "ваш", "вашу", "вашего", "вашей", "сейчас", "уже", "тоже", "сразу", "сіз", "сізге", "сізді", "сіздің"}
+_KZ_I_AM = re.compile(r"^(.{3,}?)(?:мын|мін|пын|пін|бын|бін)$")  # Нұрланмын -> Нұрлан, Айбекпін -> Айбек
 
 
 def number_turns(record: dict) -> dict:
@@ -25,12 +36,31 @@ def number_turns(record: dict) -> dict:
 
 
 def guess_operator(transcript: list[dict]) -> str | None:
-    for t in transcript:
-        if t["speaker"] == "operator":
-            m = OPERATOR_NAME.search(t["text"])
-            if m and "скрыто" not in m.group(1).lower():
-                return m.group(1).capitalize()
+    """Operator's name from how they introduce themselves in their first few turns; None if not said or masked
+    (calls have "[Имя скрыто]")."""
+    for t in [t for t in transcript if t["speaker"] == "operator"][:3]:
+        for rx in OPERATOR_NAME:
+            for m in rx.finditer(t["text"]):
+                name = m.group(1).strip("-")
+                if name.lower() in _NOT_NAME or "скрыто" in name.lower():
+                    continue
+                k = _KZ_I_AM.match(name)
+                if k and re.search(r"(?i)\bмен\b", t["text"]):
+                    name = k.group(1)
+                return name[:1].upper() + name[1:].lower()
     return None
+
+
+def backfill_operator_names(db: Session) -> int:
+    """Fill operator_name for stored conversations where it is empty (e.g. loaded before the extractor improved)."""
+    n = 0
+    for conv in db.query(Conversation).filter(Conversation.operator_name.is_(None)):
+        name = guess_operator(conv.transcript or [])
+        if name:
+            conv.operator_name, n = name, n + 1
+    if n:
+        db.commit()
+    return n
 
 
 def with_group_id(base_url: str, group_id: str) -> str:
