@@ -35,6 +35,5 @@ export const api = {
   get: p => req("GET", p),
   post: (p, b) => req("POST", p, b ?? {}),
   put: (p, b) => req("PUT", p, b),
-  del: p => req("DELETE", p),
   url: p => base() + p,
 };

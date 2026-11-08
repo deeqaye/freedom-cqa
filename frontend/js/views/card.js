@@ -1,8 +1,7 @@
 import { api, getRole } from "../api.js";
 import { createPlayer } from "../components/player.js";
-import { icon } from "../icons.js";
 import {
-  CHANNEL, LANG, MARK, SPEAKER, esc, fmtNum, fmtTime, fmtTs, fmtValue, modal, optionsHtml, scoreTone, skeleton, toast, tone, valueOptions, fmtDur, fmtUsd,
+  CHANNEL, LANG, MARK, SPEAKER, esc, fmtNum, fmtTime, fmtTs, fmtValue, modal, optionsHtml, scoreTone, toast, tone, valueOptions, fmtDur, fmtUsd,
 } from "../ui.js";
 
 const AP_STATUS = { open: ["warn", "Апелляция на рассмотрении"], accepted: ["good", "Апелляция принята"], rejected: ["na", "Апелляция отклонена"] };
@@ -27,7 +26,7 @@ export async function mount(el, { id }) {
       </div>
       <div class="row" data-head-actions></div>
     </div>
-    ${isCall ? `<div class="card player mb-3" data-player></div>` : ""}
+    ${isCall ? `<div class="card player" data-player style="margin-bottom:16px"></div>` : ""}
     <div class="grid2">
       <section class="card">
         <h2>Расшифровка</h2>
@@ -43,7 +42,7 @@ export async function mount(el, { id }) {
             </div>`).join("")}
         </div>
       </section>
-      <section class="card" data-score><h2>Оценка качества</h2>${skeleton("card")}</section>
+      <section class="card" data-score><h2>Оценка качества</h2><div class="empty">Загрузка…</div></section>
     </div>`;
 
   if (isCall) player = createPlayer(el.querySelector("[data-player]"), { src: api.url(`/api/audio/${encodeURIComponent(conv.id)}`), transcript: conv.transcript });
@@ -99,10 +98,10 @@ export async function mount(el, { id }) {
       } catch (err) { toast(err.message, true); } finally { e.target.disabled = false; }
     };
     const cmp = compareHtml();
-    if (!ev) { scoreEl.innerHTML = `${cmp}<h2>Оценка качества</h2><div class="empty-state">${icon("checklist", 32)}<p>Диалог ещё не оценён. Нажмите «Оценить» вверху.</p></div>`; return; }
-    if (ev.status === "queued" || ev.status === "running") { scoreEl.innerHTML = `${cmp}<h2>Оценка качества</h2><div class="empty-state"><span class="chip dot info">Оценивается…</span></div>`; return; }
+    if (!ev) { scoreEl.innerHTML = `${cmp}<h2>Оценка качества</h2><div class="empty">Диалог ещё не оценён.</div>`; return; }
+    if (ev.status === "queued" || ev.status === "running") { scoreEl.innerHTML = `${cmp}<h2>Оценка качества</h2><div class="empty">Оценивается…</div>`; return; }
     if (ev.status === "error") {
-      scoreEl.innerHTML = `${cmp}<h2>Оценка качества</h2><div class="alert bad">${icon("alert", 16)}Оценка не выполнена</div><p class="small">${esc(ev.error)}</p>`;
+      scoreEl.innerHTML = `${cmp}<h2>Оценка качества</h2><div class="alert bad">Оценка не выполнена</div><p class="small">${esc(ev.error)}</p>`;
       return;
     }
 
@@ -110,17 +109,18 @@ export async function mount(el, { id }) {
     appeals.forEach(a => { (apBy[a.criterion_id] = apBy[a.criterion_id] || []).push(a); });
     const s = ev.final_score, changed = ev.final_score !== ev.original_score;
     const C = 2 * Math.PI * 70, frac = s == null ? 0 : s / 100;
+    const ringColor = { good: "#1f7a3a", warn: "#c77a12", bad: "#c2412d", na: "#8a978e" }[scoreTone(s)];
     const lost = ev.criteria.filter(c => c.type !== "flag" && c.points != null && c.points < c.effective_weight - 0.005);
     const sections = Object.entries(ev.sections || {});
 
     scoreEl.innerHTML = `${cmp}
-      <div class="card-head"><h2>Оценка качества</h2><span class="spacer"></span>
+      <div class="row"><h2 style="margin:0">Оценка качества</h2><span class="spacer"></span>
         <span class="small muted">${esc(ev.checklist.name)} v${ev.checklist.version} · ${esc(ev.model.name || ev.evaluator)}${usageText(ev)}</span></div>
-      ${ev.critical_flag ? `<div class="alert bad mb-2">${icon("alert", 16)}<span>Выявлена грубая ошибка — отмечено отдельно, итог не обнуляется</span></div>` : ""}
-      <div class="score-head">
+      ${ev.critical_flag ? `<div class="alert bad" style="margin-top:10px">⚠ Выявлена грубая ошибка — отмечено отдельно, итог не обнуляется</div>` : ""}
+      <div class="score-head" style="margin-top:12px">
         <div class="ring" role="img" aria-label="Итоговый балл ${fmtNum(s)} из 100">
-          <svg width="160" height="160"><circle class="track" cx="80" cy="80" r="70" fill="none" stroke-width="12"/>
-            <circle class="arc ${scoreTone(s)}" cx="80" cy="80" r="70" fill="none" stroke-width="12" stroke-linecap="round"
+          <svg width="160" height="160"><circle cx="80" cy="80" r="70" fill="none" stroke="#e8ede9" stroke-width="12"/>
+            <circle cx="80" cy="80" r="70" fill="none" stroke="${ringColor}" stroke-width="12" stroke-linecap="round"
               stroke-dasharray="${C * frac} ${C}"/></svg>
           <div class="val"><b>${s == null ? "—" : fmtNum(s)}</b><span>/ 100</span>${changed ? `<s title="Исходная оценка">${fmtNum(ev.original_score)}</s>` : ""}</div>
         </div>
@@ -129,22 +129,22 @@ export async function mount(el, { id }) {
           ${changed ? `<p class="change">Исходная оценка ${fmtNum(ev.original_score)} → после апелляции ${fmtNum(ev.final_score)}</p>` : ""}
         </div>
       </div>
-      ${lost.length ? `<h3 class="mt-3">Почему снижена оценка</h3>
+      ${lost.length ? `<h3 style="margin-top:14px">Почему снижена оценка</h3>
         <ul class="why">${lost.map(c => `<li><b>${esc(c.title)}</b> — ${esc(c.rationale)}</li>`).join("")}</ul>` : ""}
-      <h3 class="mt-3">Критерии</h3>
+      <h3 style="margin-top:14px">Критерии</h3>
       ${ev.criteria.map(c => critRow(c, apBy[c.criterion_id] || [])).join("")}
-      <p class="small muted mt-2">Вес N/A-критериев перераспределён между применимыми. Баллы — после перераспределения.</p>`;
+      <p class="small muted" style="margin-top:12px">Вес N/A-критериев перераспределён между применимыми. Баллы — после перераспределения.</p>`;
   }
 
   /** Scores of this conversation under each checklist version; click to switch. */
   function compareHtml() {
     if (evals.length < 2) return "";
-    return `<div class="compare"><h3>Сравнение по чек-листам</h3>
+    return `<div class="compare"><h3 style="margin:0 0 6px">Сравнение по чек-листам</h3>
       <table class="tbl"><tbody>${evals.map(r => `
         <tr class="click ${ev && r.evaluation_id === ev.id ? "sel" : ""}" data-cmp="${r.evaluation_id}" title="Показать эту оценку">
           <td>${esc(r.checklist_name)} <span class="muted">v${r.version}</span></td>
           <td class="num">${r.status === "ok" ? `<span class="chip ${scoreTone(r.final_score)}">${fmtNum(r.final_score)}</span>` : esc(r.status)}</td>
-          <td>${r.critical_flag ? '<span class="chip bad" title="Грубая ошибка">${icon("alert", 13)}</span>' : ""}</td></tr>`).join("")}</tbody></table></div>`;
+          <td>${r.critical_flag ? '<span class="chip bad">⚠</span>' : ""}</td></tr>`).join("")}</tbody></table></div>`;
   }
 
   function critRow(c, aps) {

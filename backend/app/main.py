@@ -30,6 +30,16 @@ app = FastAPI(title="CQA — Conversation Quality Analytics", version="0.1.0", l
 # Allow embedding the UI elsewhere (e.g. as a Dynamics 365 HTML web resource).
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
+
+@app.middleware("http")
+async def no_stale_ui(request, call_next):
+    """UI files are ES modules that import each other: after a deploy a browser must not mix cached old files with
+    new ones (a missing export blanks the page). no-cache = always revalidate (ETag -> cheap 304 if unchanged)."""
+    resp = await call_next(request)
+    if request.url.path.startswith("/ui"):
+        resp.headers["Cache-Control"] = "no-cache"
+    return resp
+
 app.include_router(conversations.router)
 app.include_router(checklists.router)
 app.include_router(evaluations.router)

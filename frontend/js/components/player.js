@@ -1,25 +1,19 @@
 // Call player over one mono recording.
 // Bar HEIGHT is the real loudness of the recording (RMS per 0.1 s), so indicators match what you hear.
 // The transcript only COLOURS bars by speaker (mono audio, approximate timestamps); see align.js.
-import { icon } from "../icons.js";
-import { cssVar, fmtTime } from "../ui.js";
+import { fmtTime } from "../ui.js";
 import { BIN, align, buildTimeline, loudness, utterDur } from "./align.js";
 
 // Each lane shows sound only where its own speaker talks. "other" = IVR bot + sound no transcript line
 // covers (e.g. hold music), so no audio is hidden and every bar is in exactly one lane.
 const LANES = [["client", "Клиент"], ["operator", "Оператор"], ["other", "Бот / прочее"]];
 const laneOf = who => (who === "client" || who === "operator" ? who : "other");
-// Colors come from CSS tokens (--wave-*) so the waveform follows the light/dark theme.
-// [played, unplayed]; "none" = speech that no transcript line covers.
-let COLORS = null;
-function readColors() {
-  const v = n => cssVar(`--wave-${n}`);
-  COLORS = {
-    client: [v("client"), v("client-2")], operator: [v("operator"), v("operator-2")],
-    bot: [v("bot"), v("bot-2")], none: [v("none"), v("none-2")],
-    empty: v("empty"), cursor: v("cursor"), region: v("region"), regionEdge: cssVar("--hl-border"),
-  };
-}
+const COLORS = {
+  client: ["#0e3b2a", "#5d8a6e"],     // [played, unplayed]
+  operator: ["#1f7a3a", "#7cc08a"],
+  bot: ["#4f7f8f", "#a7c4cc"],
+  none: ["#8a978e", "#c9d3cc"],       // speech that no transcript line covers
+};
 
 export function createPlayer(root, { src, transcript }) {
   const toRec = buildTimeline(transcript);
@@ -31,10 +25,10 @@ export function createPlayer(root, { src, transcript }) {
 
   root.innerHTML = `
     <div class="lanes">
-      ${LANES.map(([k, l]) => `<div class="lane-label${k === "other" ? " small muted" : ""}">${l}</div><canvas data-lane="${k}" aria-label="Дорожка: ${l}"${k === "other" ? ' class="short"' : ""}></canvas>`).join("")}
+      ${LANES.map(([k, l]) => `<div class="lane-label${k === "other" ? " small muted" : ""}">${l}</div><canvas data-lane="${k}" aria-label="Дорожка: ${l}"${k === "other" ? ' style="height:30px"' : ""}></canvas>`).join("")}
     </div>
     <div class="controls">
-      <button class="play" data-play aria-label="Воспроизвести">${icon("play", 18)}</button>
+      <button class="play" data-play aria-label="Воспроизвести">▶</button>
       <span class="time" data-time>00:00 / --:--</span>
       <div class="progress" data-prog><i></i><b></b></div>
       <button class="btn ghost sm" data-start title="К началу записи">⏮ Начало</button>
@@ -59,7 +53,6 @@ export function createPlayer(root, { src, transcript }) {
   }
 
   function draw() {
-    if (!COLORS) readColors();
     const dur = audio.duration || (env ? env.length * BIN : 1);
     const pos = (audio.currentTime || 0) / dur;
     for (const cv of canvases) {
@@ -69,15 +62,15 @@ export function createPlayer(root, { src, transcript }) {
       const g = cv.getContext("2d");
       g.scale(dpr, dpr);
       if (region) {
-        g.fillStyle = COLORS.region;
+        g.fillStyle = "rgba(240,184,102,.28)";
         const x0 = region[0] / dur * w, x1 = Math.max(region[1] / dur * w, x0 + 6);
         g.fillRect(x0, 0, x1 - x0, h);
-        g.fillStyle = COLORS.regionEdge; g.fillRect(x0, 0, 1.5, h); g.fillRect(x1 - 1.5, 0, 1.5, h);
+        g.fillStyle = "#f0b866"; g.fillRect(x0, 0, 1.5, h); g.fillRect(x1 - 1.5, 0, 1.5, h);
       }
       const lane = cv.dataset.lane, step = 3, n = Math.floor(w / step);
       for (let i = 0; i < n; i++) {
         const played = i / n <= pos;
-        if (!env) { g.fillStyle = COLORS.empty; g.fillRect(i * step, h / 2 - 1, 2, 2); continue; }
+        if (!env) { g.fillStyle = "#dfe5e1"; g.fillRect(i * step, h / 2 - 1, 2, 2); continue; }
         // loudest bin inside this bar's time range -> bar height (true loudness)
         const a = Math.floor((i / n) * dur / BIN), b = Math.max(a + 1, Math.floor(((i + 1) / n) * dur / BIN));
         // loudest voiced bin of THIS lane's speaker within the bar
@@ -85,12 +78,12 @@ export function createPlayer(root, { src, transcript }) {
         for (let k = a; k < Math.min(b, env.length); k++) {
           if (voiced[k] && laneOf(owner[k]) === lane && env[k] > amp) { amp = env[k]; who = owner[k]; }
         }
-        if (!who) { g.fillStyle = COLORS.empty; g.fillRect(i * step, h / 2 - 1, 2, 2); continue; } // not this speaker
+        if (!who) { g.fillStyle = "#e3e8e4"; g.fillRect(i * step, h / 2 - 1, 2, 2); continue; } // not this speaker
         const bh = Math.max(3, Math.sqrt(amp) * (h - 4));
         g.fillStyle = COLORS[who][played ? 0 : 1];
         g.fillRect(i * step, (h - bh) / 2, 2, bh);
       }
-      g.fillStyle = COLORS.cursor;
+      g.fillStyle = "#145c2a";
       g.fillRect(pos * w, 0, 1.5, h);
     }
     const p = pos * 100;
@@ -140,17 +133,14 @@ export function createPlayer(root, { src, transcript }) {
     if (op) seekTo(span(op)[0] - 1.5);
   };
   $("[data-rate]").onchange = e => { audio.playbackRate = +e.target.value; };
-  const playBtn = $("[data-play]");
-  audio.addEventListener("play", () => { playBtn.innerHTML = icon("pause", 18); playBtn.setAttribute("aria-label", "Пауза"); loop(); });
-  audio.addEventListener("pause", () => { playBtn.innerHTML = icon("play", 18); playBtn.setAttribute("aria-label", "Воспроизвести"); draw(); });
+  audio.addEventListener("play", () => { $("[data-play]").textContent = "❚❚"; loop(); });
+  audio.addEventListener("pause", () => { $("[data-play]").textContent = "▶"; draw(); });
   audio.addEventListener("loadedmetadata", () => {
     if (pending != null) { const p = pending; pending = null; seekTo(p); if (wantPlay) audio.play().catch(() => {}); }
     draw();
   });
   const onResize = () => draw();
-  const onTheme = () => { readColors(); draw(); };
   addEventListener("resize", onResize);
-  addEventListener("cqa:theme", onTheme);
   load();
 
   return {
@@ -170,6 +160,6 @@ export function createPlayer(root, { src, transcript }) {
       if (play && audio.readyState >= 1) audio.play().catch(() => {});
       draw();
     },
-    destroy() { audio.pause(); cancelAnimationFrame(raf); removeEventListener("resize", onResize); removeEventListener("cqa:theme", onTheme); },
+    destroy() { audio.pause(); cancelAnimationFrame(raf); removeEventListener("resize", onResize); },
   };
 }
