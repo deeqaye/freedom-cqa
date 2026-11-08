@@ -1,5 +1,6 @@
-# CQA — Conversation Quality Analytics
-
+# TEAM NAME: ABILITY DRAFT ENJOYERS
+Damir Kim @deeqaye, Nursultan Chokushev @exXzic
+## CQA — Conversation Quality Analytics
 This prototype scores operator conversations (chats and calls, in RU, KZ and EN) against a configurable checklist. It shows the evidence behind each score and supports appeals and review.
 
 - **Service** (`backend/`): FastAPI and SQLAlchemy. It handles storage, versioned checklists, deterministic scoring, the evaluation queue and the `results.json` export.
